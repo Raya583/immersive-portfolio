@@ -4,12 +4,13 @@ import { Suspense } from "react";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { CameraRig } from "@/components/three/CameraRig";
 import { ParticleField } from "@/components/three/ParticleField";
+import { Islands } from "@/components/three/Islands";
 import { ATMOSPHERE_CONFIG } from "@/config/atmosphere";
 
 /**
- * The contents of the 3D world. The Void now has atmosphere: soft depth fog
- * fades distant particles into the dark, and a gentle bloom pass makes the
- * bright ones glow like real light. "Subtle & dreamy" — restraint on purpose.
+ * The contents of the 3D world. The Void now holds atmosphere, the ambient
+ * particle field, AND the first floating island — real geometry materialising
+ * in the dark. Lighting is minimal and cool so the island reads as dreamlike.
  */
 export function Experience() {
   const { bloom, fog } = ATMOSPHERE_CONFIG;
@@ -18,8 +19,12 @@ export function Experience() {
     <Suspense fallback={null}>
       <fog attach="fog" args={[fog.color, fog.near, fog.far]} />
 
+      <ambientLight intensity={0.4} color="#8a7fb5" />
+      <directionalLight position={[5, 8, 5]} intensity={1.1} color="#e0d4ff" />
+
       <CameraRig />
       <ParticleField />
+      <Islands />
 
       <EffectComposer>
         <Bloom
