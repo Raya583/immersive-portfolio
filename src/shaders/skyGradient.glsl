@@ -1,9 +1,9 @@
 // Shared golden-hour sky gradient.
 //
 // This chunk has NO main() — it is prepended in JS to both sky.frag.glsl and
-// burst.frag.glsl (see SkyDome.tsx / SkyBurst.tsx) so the burst paints the
-// exact same sky that sits behind it, and fading the burst away causes no
-// colour pop. Uniform values come from createSkyUniforms() in skyUniforms.ts.
+// burst.frag.glsl (see SkyBurst.tsx). It colours the sky burst during the
+// opening cinematic; the map's sky is map-bg.png, layered behind the canvas.
+// Uniform values come from createSkyUniforms() in skyUniforms.ts.
 //
 // The gradient runs bottom → top of the SCREEN, not along a world direction.
 // That is deliberate: the map camera looks almost straight down, so a true

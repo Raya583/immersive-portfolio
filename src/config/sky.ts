@@ -69,13 +69,18 @@ export const SKY_CONFIG = {
    * the sun is this low — warm from the sky, cool violet bounce from below.
    */
   light: {
-    sunColor: "#ffd2a1",
-    sunIntensity: 1.9,
-    ambientColor: "#ffd9c4",
-    ambientIntensity: 0.75,
-    hemiSkyColor: "#ffc48f",
-    hemiGroundColor: "#4a3b63",
-    hemiIntensity: 0.7,
+    // Tuned against map-bg.png, whose sunset runs pinker than the procedural
+    // gradient these were first set for. The SUN carries the warmth and does
+    // the modelling; ambient and hemisphere stay low on purpose — lifting the
+    // fills to match the bright photo flattens the low-poly forms and the
+    // islands go chalky and pasted-on, which is the opposite of blending in.
+    sunColor: "#ffc79a",
+    sunIntensity: 2.05,
+    ambientColor: "#ffd2c6",
+    ambientIntensity: 0.6,
+    hemiSkyColor: "#ffb9a0",
+    hemiGroundColor: "#6a5480",
+    hemiIntensity: 0.52,
   },
 
   /**

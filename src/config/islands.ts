@@ -36,6 +36,13 @@ export interface IslandConfig {
   appearAtStep: number;
   /** World units above the island's origin to float its name label. */
   labelHeight: number;
+  /**
+   * Optional per-island override for the project fly-in camera, added to this
+   * island's position. Leave it off to use MAP_CONFIG.focus.offset, which is
+   * the right answer for most of them — set it only when an island needs its
+   * own viewing angle (a tall model, or one whose good side faces elsewhere).
+   */
+  focusOffset?: Vec3;
 }
 
 /**
@@ -113,6 +120,18 @@ export const JOURNEY: readonly string[] = [
   "winter",
 ] as const;
 
+const BY_ID = new Map(ISLANDS.map((island) => [island.id, island]));
+
+/** Lookup by id — used by the project fly-in. Allocation-free at call time. */
+export function getIsland(id: string | null): IslandConfig | undefined {
+  return id ? BY_ID.get(id) : undefined;
+}
+
 export const ISLAND_APPEAR_SECONDS = 2.6;
 export const ISLAND_STAGGER_SECONDS = 0.35;
 export const ISLAND_SPIN_SPEED = 0.15;
+
+/** How much an island swells when the pointer is over it. 0.08 = 8% bigger. */
+export const ISLAND_HOVER_SCALE = 0.08;
+/** easeAlpha time constant for that swell. Lower = snappier. */
+export const ISLAND_HOVER_SECONDS = 0.35;

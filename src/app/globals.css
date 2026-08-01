@@ -83,3 +83,934 @@ canvas {
     0 0 24px rgba(150, 130, 230, 0.35),
     0 2px 30px rgba(0, 0, 0, 0.7);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * SCROLL CURTAIN — the transition between the map and an island's landing
+ * page. Aged parchment and carved wooden rollers, built entirely from
+ * gradients; no image, no model.
+ *
+ *   1. unroll — rollers part, parchment grows down the screen
+ *   2. hold   — island name + spinner on the parchment
+ *   3. wipe   — BOTH rods sweep inward and meet in the middle
+ *   4. (back) unwipe (rods sweep back out), then roll shut vertically
+ *
+ * TUNING
+ *   · timing            → config/curtain.ts (NOT here)
+ *   · parchment colour  → --parch-* below
+ *   · texture strength  → --grain-ink / --mottle-ink below
+ *   · wood colour       → --wood-* below
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.curtain {
+  /* Parchment: warm ochre, light in the middle and worn at the edges. */
+  --parch-light: #efd9a8;
+  --parch-mid: #dcbc82;
+  --parch-deep: #c39d63;
+  --parch-edge: #9c7439;
+  /* Ink used for every stain, fibre and shadow on the paper. */
+  --mottle-ink: rgba(104, 68, 24, 0.22);
+  --grain-ink: rgba(92, 58, 20, 0.05);
+  /* Carved wood. */
+  --wood-lit: #d7a35c;
+  --wood-mid: #9a6529;
+  --wood-dark: #5a3512;
+  --wood-deep: #2b1707;
+
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  /* A curtain, never a control — clicks belong to whatever is behind it. */
+  pointer-events: none;
+}
+
+/* CLOSES TO THE CENTRE. Each half collapses onto the centre line via scaleX,
+   which is composited — animating a clip-path or width across the whole
+   viewport repaints every frame and lets the paper edge fall behind the rods
+   that are supposed to be dragging it. The parchment squashes slightly as it
+   goes, which is what rolling onto a rod should look like anyway.
+
+   The 1px overlap hides any sub-pixel seam at the centre; both halves draw the
+   same viewport-aligned content, so the overlap is invisible. */
+.curtain-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  transition: transform var(--wipe-ms) cubic-bezier(0.5, 0, 0.25, 1);
+  will-change: transform;
+}
+
+.curtain-panel-left {
+  left: 0;
+  width: calc(50% + 1px);
+  transform-origin: right center;
+}
+
+.curtain-panel-right {
+  left: 50%;
+  width: 50%;
+  transform-origin: left center;
+}
+
+.curtain.is-wiped .curtain-panel {
+  transform: scaleX(0);
+}
+
+/* Inside each half, the scroll is laid out at full viewport width and pulled
+   back into place, so the two halves reconstruct one continuous scroll. */
+.curtain-face {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.curtain-panel-left .curtain-face {
+  left: 0;
+}
+
+.curtain-panel-right .curtain-face {
+  left: -50vw;
+}
+
+/* ── Carved wooden rollers ───────────────────────────────────────────────── */
+.curtain-roller {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  height: 1.75rem;
+  border-radius: 7px;
+  background:
+    /* coarse grain */
+    repeating-linear-gradient(
+      90deg,
+      rgba(38, 20, 6, 0.26) 0 2px,
+      transparent 2px 9px
+    ),
+    /* fine highlight fibres */
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 216, 160, 0.11) 0 1px,
+      transparent 1px 15px
+    ),
+    /* cylindrical shading — the band of light is what makes it read round */
+    linear-gradient(
+      180deg,
+      var(--wood-deep) 0%,
+      var(--wood-dark) 12%,
+      var(--wood-mid) 30%,
+      var(--wood-lit) 45%,
+      var(--wood-mid) 62%,
+      var(--wood-dark) 84%,
+      var(--wood-deep) 100%
+    );
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.66),
+    0 3px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 230, 190, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+}
+
+/* Turned finials at each end. */
+.curtain-roller::before,
+.curtain-roller::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 1.5rem;
+  height: 2.6rem;
+  transform: translateY(-50%);
+  border-radius: 46% / 40%;
+  background: radial-gradient(
+    ellipse at 34% 28%,
+    var(--wood-lit) 0%,
+    var(--wood-mid) 34%,
+    var(--wood-dark) 68%,
+    var(--wood-deep) 100%
+  );
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.62),
+    inset 0 2px 3px rgba(255, 226, 180, 0.4),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.5);
+}
+
+.curtain-roller::before {
+  left: 0;
+}
+
+.curtain-roller::after {
+  right: 0;
+}
+
+/* ── Parchment ───────────────────────────────────────────────────────────── */
+.curtain-sheet {
+  position: relative;
+  flex: none;
+  height: 0;
+  overflow: hidden;
+  transition: height var(--unroll-ms) cubic-bezier(0.22, 0.8, 0.28, 1);
+
+  background-color: var(--parch-mid);
+  background-image:
+    /* vignette — centre light, edges worn and dark */
+    radial-gradient(
+      ellipse 78% 82% at 50% 46%,
+      rgba(255, 240, 205, 0.5) 0%,
+      rgba(255, 240, 205, 0.12) 38%,
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 120% 130% at 50% 50%,
+      transparent 42%,
+      rgba(94, 60, 20, 0.3) 78%,
+      rgba(74, 44, 12, 0.55) 100%
+    ),
+    /* stains and mottling */
+    radial-gradient(ellipse 26% 34% at 17% 22%, var(--mottle-ink) 0%, transparent 62%),
+    radial-gradient(ellipse 30% 26% at 82% 74%, var(--mottle-ink) 0%, transparent 66%),
+    radial-gradient(ellipse 18% 22% at 63% 18%, rgba(126, 78, 30, 0.16) 0%, transparent 68%),
+    radial-gradient(ellipse 22% 18% at 32% 82%, rgba(126, 78, 30, 0.14) 0%, transparent 70%),
+    radial-gradient(circle at 46% 58%, rgba(140, 92, 38, 0.1) 0%, transparent 34%),
+    /* crosshatch grain — two odd angles interfere into a fibrous tooth */
+    repeating-linear-gradient(37deg, var(--grain-ink) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(113deg, var(--grain-ink) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(92, 58, 20, 0.035) 0 1px, transparent 1px 7px),
+    /* base wash */
+    linear-gradient(
+      180deg,
+      var(--parch-light) 0%,
+      var(--parch-mid) 42%,
+      var(--parch-deep) 78%,
+      var(--parch-edge) 100%
+    );
+
+  box-shadow:
+    inset 0 14px 22px -12px rgba(52, 30, 8, 0.85),
+    inset 0 -14px 22px -12px rgba(52, 30, 8, 0.85),
+    inset 22px 0 40px -34px rgba(52, 30, 8, 0.9),
+    inset -22px 0 40px -34px rgba(52, 30, 8, 0.9);
+}
+
+/* Torn, uneven edges where the paper meets each roller. Drawn ON the parchment
+   in a darker tone, so no transparency is needed and nothing shows through. */
+.curtain-sheet::before,
+.curtain-sheet::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 16px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(84, 52, 16, 0.42) 0 3px,
+      rgba(84, 52, 16, 0.14) 3px 8px,
+      rgba(84, 52, 16, 0.46) 8px 12px,
+      rgba(84, 52, 16, 0.08) 12px 19px,
+      rgba(84, 52, 16, 0.34) 19px 23px,
+      transparent 23px 31px
+    );
+}
+
+.curtain-sheet::before {
+  top: 0;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+}
+
+.curtain-sheet::after {
+  bottom: 0;
+  -webkit-mask-image: linear-gradient(0deg, #000 0%, transparent 100%);
+  mask-image: linear-gradient(0deg, #000 0%, transparent 100%);
+}
+
+/* Full height, less the two rollers, so they sit at the very screen edges. */
+.curtain.is-tall .curtain-sheet {
+  height: calc(100vh - 3.5rem);
+}
+
+/* Rolling shut is its own (quicker) duration. */
+.curtain[data-phase="roll"] .curtain-sheet {
+  transition-duration: var(--roll-ms);
+}
+
+/* ── The two rods the parchment rolls onto ───────────────────────────────── */
+.curtain-rod {
+  position: absolute;
+  top: -1.5%;
+  bottom: -1.5%;
+  width: 2rem;
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(38, 20, 6, 0.26) 0 2px,
+      transparent 2px 9px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 216, 160, 0.1) 0 1px,
+      transparent 1px 15px
+    ),
+    linear-gradient(
+      90deg,
+      var(--wood-deep) 0%,
+      var(--wood-dark) 14%,
+      var(--wood-mid) 32%,
+      var(--wood-lit) 46%,
+      var(--wood-mid) 64%,
+      var(--wood-dark) 85%,
+      var(--wood-deep) 100%
+    );
+  opacity: 0;
+  transition:
+    transform var(--wipe-ms) cubic-bezier(0.5, 0, 0.25, 1),
+    opacity 180ms ease;
+}
+
+/* Finial caps top and bottom of each rod. */
+.curtain-rod::before,
+.curtain-rod::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 2.5rem;
+  height: 1.4rem;
+  transform: translateX(-50%);
+  border-radius: 40% / 46%;
+  background: radial-gradient(
+    ellipse at 30% 32%,
+    var(--wood-lit) 0%,
+    var(--wood-mid) 36%,
+    var(--wood-dark) 70%,
+    var(--wood-deep) 100%
+  );
+  box-shadow: inset 0 2px 3px rgba(255, 226, 180, 0.35);
+}
+
+.curtain-rod::before {
+  top: -0.5rem;
+}
+
+.curtain-rod::after {
+  bottom: -0.5rem;
+}
+
+/* Each rod throws its shadow onto the parchment still to come. */
+.curtain-rod-left {
+  left: 0;
+  margin-left: -1rem;
+  box-shadow: 26px 0 40px -12px rgba(0, 0, 0, 0.7);
+}
+
+.curtain-rod-right {
+  right: 0;
+  margin-right: -1rem;
+  box-shadow: -26px 0 40px -12px rgba(0, 0, 0, 0.7);
+}
+
+.curtain[data-phase="wipe"] .curtain-rod,
+.curtain[data-phase="unwipe"] .curtain-rod {
+  opacity: 1;
+}
+
+/* Meeting in the middle is what closes the scroll. */
+.curtain.is-wiped .curtain-rod-left {
+  transform: translateX(50vw);
+}
+
+.curtain.is-wiped .curtain-rod-right {
+  transform: translateX(-50vw);
+}
+
+/* ── The held beat: island name + spinner ────────────────────────────────── */
+.curtain-mark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4rem;
+  opacity: 0;
+  transition: opacity 320ms ease var(--mark-delay);
+}
+
+.curtain-mark.is-shown {
+  opacity: 1;
+}
+
+.curtain-name {
+  font-size: clamp(1.6rem, 5vw, 2.6rem);
+  letter-spacing: 0.12em;
+  color: #4a2c0e;
+  text-align: center;
+  padding: 0 1.5rem;
+  text-shadow: 0 1px 0 rgba(255, 240, 205, 0.55);
+}
+
+.curtain-spinner {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 2px solid rgba(74, 44, 14, 0.25);
+  border-top-color: rgba(74, 44, 14, 0.85);
+  border-radius: 999px;
+  animation: curtain-spin 900ms linear infinite;
+}
+
+@keyframes curtain-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ISLAND LANDING PAGE — one stylesheet, five worlds. Every colour below is a
+ * custom property set inline from ISLAND_THEMES (config/islandThemes.ts), so
+ * theming an island is a config edit and never a CSS edit.
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.landing {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--landing-bg);
+  color: var(--landing-text);
+}
+
+/* ── Layering, back to front ─────────────────────────────────────────────
+   background gradient (the .landing element itself)
+     → silhouette scenery (branches, then deer)
+       → ambient particles (snow)
+         → hero + body content
+   Every layer below the content is fixed and pointer-transparent. */
+.landing-scenery {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.landing-effect {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.landing-back,
+.landing-hero,
+.landing-body {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Back control ────────────────────────────────────────────────────────── */
+.landing-back {
+  position: fixed;
+  top: 1.4rem;
+  left: 1.4rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--landing-accent) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--landing-accent) 12%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--landing-text);
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 200ms ease, transform 200ms ease;
+}
+
+.landing-back:hover {
+  background: color-mix(in srgb, var(--landing-accent) 24%, transparent);
+  transform: translateX(-2px);
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.landing-hero {
+  /* Horizon glow for this world, from the theme. The page backdrop stays dark
+     so body copy is readable the whole way down. */
+  background: var(--landing-hero-glow);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  padding: 6rem 1.5rem 4rem;
+  text-align: center;
+}
+
+.landing-eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--landing-muted);
+}
+
+.landing-title {
+  margin: 0;
+  font-size: clamp(2.6rem, 9vw, 6rem);
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  color: var(--landing-text);
+  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.35);
+}
+
+.landing-subtitle {
+  max-width: 34rem;
+  margin: 0;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  line-height: 1.7;
+  color: var(--landing-muted);
+}
+
+.landing-todo {
+  margin: 0.4rem 0 0;
+  padding: 0.4rem 0.9rem;
+  border: 1px dashed color-mix(in srgb, var(--landing-accent) 55%, transparent);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--landing-accent);
+}
+
+.landing-cue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 2.5rem;
+}
+
+.landing-cue-line {
+  width: 1px;
+  height: 3rem;
+  background: linear-gradient(180deg, transparent, var(--landing-accent));
+  animation: landing-cue 2.4s ease-in-out infinite;
+}
+
+.landing-cue-text {
+  font-size: 0.68rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--landing-muted);
+}
+
+@keyframes landing-cue {
+  0%, 100% { opacity: 0.3; transform: scaleY(0.7); }
+  50%      { opacity: 1;   transform: scaleY(1); }
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+.landing-body {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 7rem;
+}
+
+.landing-section {
+  margin-bottom: 4.5rem;
+}
+
+.landing-heading {
+  margin: 0 0 1.4rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--landing-accent) 30%, transparent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--landing-accent);
+}
+
+.landing-lede {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.85;
+  color: var(--landing-text);
+}
+
+.landing-card {
+  padding: 2rem 2.1rem;
+  border: 1px solid color-mix(in srgb, var(--landing-accent) 22%, transparent);
+  border-radius: 14px;
+  background: var(--landing-panel);
+  backdrop-filter: blur(10px);
+}
+
+.landing-card-title {
+  margin: 0 0 1.6rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  color: var(--landing-text);
+}
+
+.landing-field {
+  margin-bottom: 1.5rem;
+}
+
+.landing-field-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--landing-accent);
+}
+
+.landing-field-body {
+  margin: 0;
+  font-size: 0.97rem;
+  line-height: 1.8;
+  color: var(--landing-text);
+}
+
+.landing-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.8rem;
+}
+
+.landing-link {
+  padding: 0.45rem 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--landing-accent) 50%, transparent);
+  border-radius: 999px;
+  font-size: 0.83rem;
+  letter-spacing: 0.06em;
+  color: var(--landing-accent);
+  text-decoration: none;
+  transition: background-color 200ms ease;
+}
+
+.landing-link:hover {
+  background: color-mix(in srgb, var(--landing-accent) 18%, transparent);
+}
+
+.landing-nda {
+  margin: 1.6rem 0 0;
+  padding: 0.65rem 0.95rem;
+  border: 1px dashed color-mix(in srgb, var(--landing-accent) 40%, transparent);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--landing-muted);
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+
+.landing-note {
+  padding: 1.3rem 1.4rem;
+  border: 1px solid color-mix(in srgb, var(--landing-accent) 16%, transparent);
+  border-radius: 12px;
+  background: var(--landing-panel);
+}
+
+.landing-note-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  color: var(--landing-accent);
+}
+
+.landing-note-body {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: var(--landing-muted);
+}
+
+.landing-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+}
+
+.landing-return {
+  padding: 0.8rem 2rem;
+  border: 1px solid color-mix(in srgb, var(--landing-accent) 45%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--landing-text);
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.landing-return:hover {
+  background: color-mix(in srgb, var(--landing-accent) 16%, transparent);
+}
+
+@media (max-width: 640px) {
+  .landing-hero {
+    padding: 5rem 1.2rem 3rem;
+  }
+
+  .landing-card {
+    padding: 1.4rem 1.3rem;
+  }
+
+  .landing-back {
+    top: 1rem;
+    left: 1rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curtain-clip,
+  .curtain-sheet,
+  .curtain-rod,
+  .curtain-mark {
+    transition-duration: 1ms !important;
+  }
+
+  .curtain-spinner,
+  .landing-cue-line {
+    animation: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * WINTER SCENERY — bare branches framing the page, and a deer crossing below.
+ * Distant shadow, never illustration: dark, blurred, low opacity, and always
+ * behind the snow. Numbers (opacity, blur, sway, deer speed and frequency)
+ * come in as custom properties from WINTER_SCENERY in config/islandThemes.ts.
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* Position and stacking come from .landing-scenery — this only adds the clip
+   so branches reaching past the viewport don't create scrollbars. */
+.winter-scenery {
+  overflow: hidden;
+}
+
+/* ── Branches ────────────────────────────────────────────────────────────── */
+.winter-branch {
+  position: absolute;
+  color: var(--branch-color);
+  opacity: var(--branch-opacity);
+  filter: blur(var(--branch-blur));
+  /* The sway pivots at the corner the limb grows from, so the tips travel
+     furthest — the way a real branch moves. */
+  animation: winter-sway var(--branch-sway) ease-in-out infinite;
+  will-change: transform;
+}
+
+.winter-branch-tl {
+  top: -3vh;
+  left: -4vw;
+  width: min(58vw, 44rem);
+  transform-origin: 0% 0%;
+}
+
+.winter-branch-tr {
+  top: -5vh;
+  right: -6vw;
+  width: min(64vw, 50rem);
+  transform-origin: 100% 0%;
+  transform: scaleX(-1);
+  animation-delay: -4.5s;
+  animation-duration: calc(var(--branch-sway) * 1.25);
+}
+
+/* Reversing the element flips the sway with it, so this one gets its own
+   keyframes to keep the motion pivoting the right way. */
+.winter-branch-tr {
+  animation-name: winter-sway-mirrored;
+}
+
+.winter-branch-l {
+  top: 46vh;
+  left: -10vw;
+  width: min(42vw, 32rem);
+  transform-origin: 0% 50%;
+  opacity: calc(var(--branch-opacity) * 0.7);
+  animation-delay: -8s;
+  animation-duration: calc(var(--branch-sway) * 1.6);
+}
+
+@keyframes winter-sway {
+  0%, 100% { transform: rotate(calc(var(--branch-degrees) * -1)); }
+  50%      { transform: rotate(var(--branch-degrees)); }
+}
+
+@keyframes winter-sway-mirrored {
+  0%, 100% { transform: scaleX(-1) rotate(calc(var(--branch-degrees) * -1)); }
+  50%      { transform: scaleX(-1) rotate(var(--branch-degrees)); }
+}
+
+/* ── Deer ────────────────────────────────────────────────────────────────── */
+.winter-deer {
+  position: absolute;
+  top: var(--deer-baseline);
+  left: 0;
+  height: var(--deer-height);
+  color: var(--deer-color);
+  opacity: 0;
+  filter: blur(var(--deer-blur));
+  /* One cycle = cross the screen, then wait out the rest off-stage. */
+  animation: winter-deer-cross var(--deer-every) linear infinite;
+  will-change: transform;
+}
+
+.winter-deer-svg {
+  height: 100%;
+  width: auto;
+  display: block;
+}
+
+/* Bounce lives on an inner element so it can't fight the crossing transform. */
+.winter-deer-bob {
+  height: 100%;
+  animation: winter-deer-bob var(--deer-stride) ease-in-out infinite;
+}
+
+.winter-deer-leg {
+  animation: winter-deer-stride var(--deer-stride) ease-in-out infinite;
+}
+
+.winter-deer-leg-b {
+  animation-delay: calc(var(--deer-stride) / -2);
+}
+
+/*
+ * The crossing is expressed as a fraction of the FULL cycle. With the defaults
+ * (13s crossing inside a 21s cycle) that is ~62%, after which the deer waits
+ * off-screen. If you change crossSeconds/everySeconds by a lot, move the 62%
+ * stops to match the new ratio.
+ */
+@keyframes winter-deer-cross {
+  0%   { transform: translateX(-22vw); opacity: 0; }
+  4%   { opacity: var(--deer-opacity); }
+  56%  { opacity: var(--deer-opacity); }
+  62%  { transform: translateX(112vw); opacity: 0; }
+  100% { transform: translateX(112vw); opacity: 0; }
+}
+
+@keyframes winter-deer-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(calc(var(--deer-bounce) * -1)); }
+}
+
+@keyframes winter-deer-stride {
+  0%, 100% { transform: rotate(16deg); }
+  50%      { transform: rotate(-16deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .winter-branch,
+  .winter-deer,
+  .winter-deer-bob,
+  .winter-deer-leg {
+    animation: none;
+  }
+
+  /* Without the crossing animation the deer would sit frozen mid-scene. */
+  .winter-deer {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * SAKURA — cherry blossom overlay on the island MAP.
+ *
+ * The container never takes pointer events, so clicking an island still works
+ * exactly as before. The framing branches that used to be drawn here as SVG
+ * are gone — map-bg.png supplies them.
+ *
+ * Petal count and burst size are in config/sakura.ts.
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.sakura {
+  position: fixed;
+  inset: 0;
+  /* Petals are the frontmost scene layer — see config/backdrop.ts. */
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2600ms ease;
+}
+
+.sakura.is-shown {
+  opacity: 1;
+}
+
+/* ── Petals ──────────────────────────────────────────────────────────────── */
+.sakura-petals {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * MAP BACKDROP — the two still images the map is built on.
+ *
+ * They sit BEHIND the R3F canvas, which is cleared transparent so they show
+ * through. That is what makes them immovable: they are not scene objects, so
+ * no camera orbit or revolve can touch them. Neither takes pointer events.
+ *
+ * Layer order (also documented in config/backdrop.ts):
+ *   0 .backdrop-sky → 1 .backdrop-temple → 2 .canvas-layer → 20 .sakura
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1800ms ease;
+}
+
+.backdrop.is-shown {
+  opacity: 1;
+}
+
+/* Full-bleed sunset. Cover-cropped and centred — see `position` in the config. */
+.backdrop-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* The temple, centred on its own point rather than its top-left corner. */
+.backdrop-temple {
+  position: absolute;
+  z-index: 1;
+  height: auto;
+  transform: translate(-50%, -50%);
+  /* Softens the cut-out's foot into the cloud sea behind it. */
+  -webkit-mask-image: linear-gradient(180deg, #000 78%, transparent 99%);
+  mask-image: linear-gradient(180deg, #000 78%, transparent 99%);
+}
+
+/* The 3D scene sits above both images and below the petals. */
+.canvas-layer {
+  position: relative;
+  z-index: 2;
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import {
   Color,
   type AmbientLight,
@@ -21,12 +21,12 @@ import { useCreationStep } from "@/hooks/creationContext";
  * plus a hemisphere fill (warm from the sky, cool violet from below) that keeps
  * the islands reading clearly from overhead even with the sun this low.
  *
- * The sky itself is drawn by SkyDome; the background colour set here is only a
- * fallback for anything the backdrop doesn't cover.
+ * It deliberately sets NO scene background: the canvas is cleared transparent
+ * so the still backdrop images behind it in the DOM show through, and painting
+ * a background here would hide them completely.
  */
 export function CreationDirector() {
   const step = useCreationStep();
-  const scene = useThree((s) => s.scene);
 
   const ambientRef = useRef<AmbientLight>(null);
   const sunRef = useRef<DirectionalLight>(null);
@@ -37,9 +37,6 @@ export function CreationDirector() {
   const c = CREATION_CONFIG;
   const light = SKY_CONFIG.light;
 
-  const bgFrom = useRef(new Color(c.voidColor));
-  const bgTo = useRef(new Color(c.skyColor));
-  const bgNow = useRef(new Color(c.voidColor));
   const fogFrom = useRef(new Color(c.voidFogColor));
   const fogTo = useRef(new Color(c.skyFogColor));
   const ambFrom = useRef(new Color(c.voidAmbientColor));
@@ -51,9 +48,6 @@ export function CreationDirector() {
     const target = STORY[step]?.day ?? 0;
     day.current += (target - day.current) * easeAlpha(DAY_EASE_SECONDS, delta);
     const p = day.current;
-
-    bgNow.current.copy(bgFrom.current).lerp(bgTo.current, p);
-    scene.background = bgNow.current;
 
     if (fogRef.current) {
       fogRef.current.color.copy(fogFrom.current).lerp(fogTo.current, p);

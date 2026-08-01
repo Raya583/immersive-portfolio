@@ -1,11 +1,11 @@
 import type { Vec3 } from "@/types/three";
 
 /**
- * "Flatten into a map." Once the islands have materialised, the camera lifts
- * on its own into a bird's-eye framing so the 3D world reads as a map: name
- * labels float above each island and a dotted trail links them in JOURNEY
- * order. Orbit stays enabled afterwards — the top-down framing is simply the
- * resting state the viewer explores from.
+ * The map view. Once the islands have materialised the camera settles, on its
+ * own, into a SIDE / THREE-QUARTER resting angle looking across the world:
+ * name labels float above each island, a dotted trail links them in JOURNEY
+ * order, and the whole constellation revolves slowly about the centre. Orbit
+ * stays enabled — the resting angle is just where the viewer starts from.
  */
 export const MAP_CONFIG = {
   /** Story step that arms the flatten (the island-reveal step). */
@@ -21,35 +21,81 @@ export const MAP_CONFIG = {
   easeSeconds: 1.6,
 
   /**
-   * ── ZOOM / HEIGHT KNOB ───────────────────────────────────────────────────
-   * The bird's-eye resting framing. `position[1]` is the zoom: raise it to pull
-   * back, lower it to move in. `position[2]` is the small forward offset that
-   * keeps the camera off the straight-down singularity (and gives the islands a
-   * touch of dimension); keep it around a fifth of the height.
+   * ── RESTING VIEW KNOB ────────────────────────────────────────────────────
+   * Where the camera settles once the reveal finishes. This is a SIDE /
+   * THREE-QUARTER angle — looking across the islands from slightly above and
+   * off to one side, with plenty of sky above them — rather than the top-down
+   * plan view it used to hold.
    *
-   * Currently ~55 units from the target, which at the 45° fov in config/scene.ts
-   * shows ~46 world units of height. The islands span 38 x 30 (see SPREAD_X /
-   * SPREAD_Z in config/islands.ts) plus labels, so everything sits in frame with
-   * room around it. Widen the spread → raise the height by the same ratio.
+   *   position[0] swings the camera around the map (the three-quarter offset)
+   *   position[1] is how high it sits; lower = flatter, more horizon
+   *   position[2] is how far back it stands
+   *   target[1] lifts the look-at, which drops the islands in frame and lets
+   *             more sky in above them
    *
-   * Tuned for a landscape viewport; a very narrow window will crop the sides.
+   * ~58 units out at about 71° off vertical. If you raise position[1] toward
+   * the distance you will drift back to a plan view — and note the resting
+   * angle has to stay inside the orbit clamps below, or OrbitControls will
+   * pull the camera straight back out of it on the next update.
    */
   camera: {
-    position: [0, 54, 12] as Vec3,
-    target: [0, 0, 0] as Vec3,
+    position: [26, 21, 48] as Vec3,
+    target: [0, 2, 0] as Vec3,
+  },
+
+  /**
+   * ── REVOLVE ──────────────────────────────────────────────────────────────
+   * The whole constellation — islands, labels and the dotted trail together —
+   * turns slowly about the map's centre, like an orrery. Deliberately glacial:
+   * it should be something you notice only if you sit and watch.
+   *
+   * Raise secondsPerRevolution to slow it down. Individual island spin is
+   * separate: ISLAND_SPIN_SPEED in config/islands.ts.
+   */
+  revolve: {
+    /** Seconds for one full turn of the constellation. */
+    secondsPerRevolution: 320,
+    /** 1 = counter-clockwise seen from above, -1 = clockwise. */
+    direction: 1,
   },
 
   /**
    * Orbit clamps swapped in when the flight starts. maxDistance must stay above
-   * the resting distance (≈55) or the viewer gets shoved inward on arrival, and
-   * minPolar has to sit below the map framing's own polar angle (≈0.22 rad) or
-   * OrbitControls would clamp the camera straight back out of the top-down pose.
+   * the resting distance (≈58) or the viewer gets shoved inward on arrival, and
+   * the resting polar angle (≈1.24 rad) has to sit between minPolar and
+   * maxPolar or OrbitControls clamps the camera straight back out of it.
    */
   orbit: {
     minDistance: 18,
     maxDistance: 90,
+    /** Still lets the viewer swing up to a plan view if they want one. */
     minPolar: 0.08,
-    maxPolar: 1.2,
+    /** Must stay ABOVE the resting angle (~1.24 rad) or the camera gets
+        clamped out of the three-quarter view the moment it arrives. */
+    maxPolar: 1.45,
+  },
+
+  /**
+   * ── PROJECT FLY-IN ───────────────────────────────────────────────────────
+   * Clicking an island flies the camera here, and the scroll unrolls once it
+   * lands. `offset` is ADDED to the island's own position, so one relative
+   * framing works for all five; when a particular island wants its own angle,
+   * give it a `focusOffset` in config/islands.ts and that wins.
+   *
+   * The offset's length is the viewing distance (currently ~16 units, which
+   * frames an 8-unit island with room around it). Push it out if the scroll
+   * overlay crowds the island behind it.
+   */
+  focus: {
+    offset: [0, 6, 15] as Vec3,
+    /** Look this far above the island's origin — its middle, not its base. */
+    targetHeight: 1.5,
+    /** Seconds the fly-IN is steered for; the scroll opens when it elapses. */
+    flightSeconds: 1.7,
+    /** Seconds the flight back OUT to the map takes. */
+    returnSeconds: 1.5,
+    /** easeAlpha time constant for both. Lower = snappier. */
+    easeSeconds: 0.7,
   },
 
   /** Floating island name labels. */

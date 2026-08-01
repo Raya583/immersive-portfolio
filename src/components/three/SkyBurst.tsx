@@ -32,7 +32,7 @@ export function SkyBurst({ step }: { step: number }) {
   const matRef = useRef<ThreeShaderMaterial>(null);
   const burst = useRef(0);
   const fade = useRef(1);
-  /** Eased exactly as SkyDome eases its own, so the two always agree. */
+  /** Eased on the same constant as everything else that follows `day`. */
   const day = useRef(0);
 
   const uniforms = useMemo(

@@ -16,12 +16,11 @@ export interface CreationConfig {
   voidSunIntensity: number;
   voidSunColor: string;
   /**
-   * Clear colour behind the scene. The sky backdrop (SkyDome) covers the frame
-   * once day rises, so this is only ever a fallback — keep it near the sky's
-   * horizon colour so any sliver of it reads correctly.
+   * Kept for reference only. The canvas is cleared transparent now and the sky
+   * comes from map-bg.png behind it (config/backdrop.ts), so nothing reads this.
    */
   skyColor: string;
-  /** Warm dusk haze on the islands. Matches the gradient's horizon amber. */
+  /** Warm dusk haze on the islands, matched to map-bg.png's pink horizon. */
   skyFogColor: string;
   skyFogNear: number;
   skyFogFar: number;
@@ -37,7 +36,7 @@ export const CREATION_CONFIG: CreationConfig = {
   voidSunIntensity: 1.1,
   voidSunColor: "#e0d4ff",
   skyColor: "#f7b273",
-  skyFogColor: "#e9a878",
+  skyFogColor: "#f0b49e",
   skyFogNear: 45,
   skyFogFar: 200,
 } as const;

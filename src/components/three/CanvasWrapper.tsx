@@ -9,13 +9,16 @@ interface CanvasWrapperProps {
 }
 
 /**
- * The single R3F entry point. GL clear color is the void black so the very
- * first frame (and everything behind the transparent sky-burst) is dark.
+ * The single R3F entry point.
+ *
+ * The canvas is cleared TRANSPARENT rather than to a colour, so the still
+ * backdrop images layered behind it in the DOM show through (see
+ * config/backdrop.ts). During the opening cinematic there is nothing behind it
+ * but the page's black, so the void reads exactly as before.
  */
 export function CanvasWrapper({ children }: CanvasWrapperProps) {
   return (
     <Canvas
-      className="h-full w-full"
       dpr={SCENE_CONFIG.dpr}
       camera={{
         fov: SCENE_CONFIG.camera.fov,
@@ -23,13 +26,15 @@ export function CanvasWrapper({ children }: CanvasWrapperProps) {
         far: SCENE_CONFIG.camera.far,
         position: SCENE_CONFIG.camera.position,
       }}
+      className="canvas-layer h-full w-full"
       gl={{
         antialias: true,
-        alpha: false,
+        alpha: true,
+        premultipliedAlpha: false,
         powerPreference: "high-performance",
       }}
       onCreated={({ gl }) => {
-        gl.setClearColor("#05040a", 1);
+        gl.setClearColor(0x000000, 0);
       }}
       flat={false}
     >
