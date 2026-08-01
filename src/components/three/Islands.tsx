@@ -5,18 +5,17 @@ import { Island } from "@/components/three/Island";
 import { ISLANDS } from "@/config/islands";
 
 /**
- * Renders every island declared in the registry. Islands are the destinations
- * of the world; for now there's just the first one materialising in the void.
+ * Renders all five islands. They materialise on the final narration line,
+ * staggered left to right so the world assembles piece by piece.
  */
 export function Islands() {
   return (
     <>
-      {ISLANDS.map((config) => (
-        <Island key={config.id} config={config} />
+      {ISLANDS.map((config, i) => (
+        <Island key={config.id} config={config} index={i} />
       ))}
     </>
   );
 }
 
-// Preload all island models so they fetch as early as possible.
 ISLANDS.forEach((island) => useGLTF.preload(island.model));

@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Hylia Serif";
+  src: url("/fonts/hylia-serif.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 html,
 body {
   margin: 0;
@@ -16,8 +24,62 @@ main {
   height: 100%;
 }
 
-/* The R3F canvas fills its parent; the parent must be sized. */
 canvas {
   display: block;
   touch-action: none;
+}
+
+/*
+ * Hylia Serif is a Latin-only fantasy face (its cmap maps ~107 codepoints and
+ * contains no Hangul), so Korean set in it would render as tofu. The stack
+ * below keeps Latin in Hylia and lets every Hangul character fall through to a
+ * Korean serif — Noto Serif KR when the webfont loads, otherwise whatever the
+ * OS ships. Per-character fallback is automatic; no markup is required for it.
+ */
+.font-hylia {
+  font-family: "Hylia Serif", "Noto Serif KR", "Apple SD Gothic Neo",
+    "Nanum Myeongjo", "Malgun Gothic", "Cinzel", Georgia, serif;
+}
+
+/* Hangul runs in the narration — Noto's serif runs heavier and tighter than
+   Hylia, so ease it back a touch to sit level with the Latin around it. */
+.narration-hangul {
+  font-family: "Noto Serif KR", "Apple SD Gothic Neo", "Nanum Myeongjo",
+    "Malgun Gothic", serif;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  opacity: 0.88;
+}
+
+/* Floating island name label on the bird's-eye map view. Opacity is driven
+   per-frame from IslandLabels.tsx, so no transition here. */
+.island-label {
+  white-space: nowrap;
+  padding: 0.3rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(14, 12, 30, 0.38);
+  backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.8rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  text-shadow:
+    0 0 10px rgba(190, 175, 255, 0.45),
+    0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+@media (min-width: 768px) {
+  .island-label {
+    font-size: 0.95rem;
+  }
+}
+
+.narration-glow {
+  text-shadow:
+    0 0 8px rgba(200, 180, 255, 0.45),
+    0 0 24px rgba(150, 130, 230, 0.35),
+    0 2px 30px rgba(0, 0, 0, 0.7);
 }

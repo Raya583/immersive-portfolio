@@ -1,16 +1,31 @@
+"use client";
+
 import { CanvasWrapper } from "@/components/three/CanvasWrapper";
 import { Experience } from "@/components/three/Experience";
+import { Narration } from "@/components/layout/Narration";
+import { StoryProvider, useStory } from "@/hooks/storyContext";
 
 /**
- * Composition root for the 3D experience. This stays a server component:
- * it wires the client Canvas together with the scene contents but ships
- * no interactivity of its own. Add lights, models, and effects inside
- * <Experience /> as the portfolio grows.
+ * Composition root. StoryProvider wraps both layers; the current step is read
+ * outside the canvas and passed into <Experience> as a prop (context doesn't
+ * cross the R3F canvas boundary, props do).
  */
+function SceneInner() {
+  const { step } = useStory();
+  return (
+    <>
+      <CanvasWrapper>
+        <Experience step={step} />
+      </CanvasWrapper>
+      <Narration />
+    </>
+  );
+}
+
 export function Scene() {
   return (
-    <CanvasWrapper>
-      <Experience />
-    </CanvasWrapper>
+    <StoryProvider>
+      <SceneInner />
+    </StoryProvider>
   );
 }

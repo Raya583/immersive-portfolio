@@ -10,16 +10,18 @@ import {
   type ShaderMaterial as ThreeShaderMaterial,
 } from "three";
 import { PARTICLE_FIELD_CONFIG } from "@/config/particles";
+import { STORY, STORY_EASE_SECONDS } from "@/config/story";
 import { useParticleField } from "@/hooks/useParticleField";
 import { usePointerWorld } from "@/hooks/usePointerWorld";
+import { useCreationStep } from "@/hooks/creationContext";
+import { easeAlpha } from "@/hooks/creationMath";
 import vertexShader from "@/shaders/particles.vert.glsl";
 import fragmentShader from "@/shaders/particles.frag.glsl";
 
 /**
- * The ambient particle field of The Void. Rendered as ONE Points object with
- * a custom shader — tens of thousands of shimmering particles in a single
- * draw call. Shimmer, drift, AND cursor reaction all run on the GPU: the
- * cursor is a single uniform and the shader computes each particle's response.
+ * The ambient particle field — one Points object, custom shader, shimmer +
+ * drift + cursor reaction on the GPU. Visibility follows the story: hidden at
+ * first (pure black), fading IN as stars appear, then OUT as daylight arrives.
  */
 export function ParticleField() {
   const config = PARTICLE_FIELD_CONFIG;
@@ -27,8 +29,10 @@ export function ParticleField() {
 
   const pointsRef = useRef<ThreePoints>(null);
   const materialRef = useRef<ThreeShaderMaterial>(null);
+  const starVis = useRef(0);
 
   const pointerWorld = usePointerWorld();
+  const step = useCreationStep();
 
   const uniforms = useMemo(
     () => ({
@@ -41,6 +45,7 @@ export function ParticleField() {
       uPointerRadius: { value: config.pointerRadius },
       uPointerPush: { value: config.pointerPush },
       uPointerGlow: { value: config.pointerGlow },
+      uStarFade: { value: 0 },
     }),
     [config],
   );
@@ -53,6 +58,11 @@ export function ParticleField() {
 
       const uPointer = material.uniforms.uPointer;
       if (uPointer) uPointer.value.copy(pointerWorld.current);
+
+      const target = STORY[step]?.starAppear ?? 0;
+      starVis.current += (target - starVis.current) * easeAlpha(STORY_EASE_SECONDS, delta);
+      const uStarFade = material.uniforms.uStarFade;
+      if (uStarFade) uStarFade.value = starVis.current;
     }
     if (pointsRef.current) {
       pointsRef.current.rotation.y += config.driftSpeed * delta;

@@ -9,9 +9,8 @@ interface CanvasWrapperProps {
 }
 
 /**
- * The single R3F entry point. Renders a fullscreen WebGL canvas that fills
- * its parent container. All 3D content is mounted as children so the scene
- * graph stays declarative and composable.
+ * The single R3F entry point. GL clear color is the void black so the very
+ * first frame (and everything behind the transparent sky-burst) is dark.
  */
 export function CanvasWrapper({ children }: CanvasWrapperProps) {
   return (
@@ -29,7 +28,9 @@ export function CanvasWrapper({ children }: CanvasWrapperProps) {
         alpha: false,
         powerPreference: "high-performance",
       }}
-      // Color management is on by default in R3F; keep it explicit.
+      onCreated={({ gl }) => {
+        gl.setClearColor("#05040a", 1);
+      }}
       flat={false}
     >
       {children}
