@@ -1,9 +1,5 @@
-import { Scene } from "@/components/three/Scene";
+import { MapHub } from "@/components/map/MapHub";
 
 export default function Home() {
-  return (
-    <main className="fixed inset-0 h-dvh w-screen overflow-hidden">
-      <Scene />
-    </main>
-  );
+  return <MapHub />;
 }

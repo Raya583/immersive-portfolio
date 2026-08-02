@@ -1,17 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { profile } from "@/content/portfolio";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Immersive Portfolio",
-  description: "An immersive 3D portfolio.",
+  title: `${profile.name} — ${profile.title}`,
+  description: `${profile.title}. ${profile.tagline} An atlas of selected work, honours and how to make contact.`,
+  openGraph: {
+    title: `${profile.name} — ${profile.title}`,
+    description: `${profile.title}. ${profile.tagline}`,
+    type: "website",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: "#000000",
+  themeColor: "#050d1e",
 };
 
 export default function RootLayout({
@@ -21,11 +25,9 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/*
-          Hylia Serif carries no Hangul, so the Korean woven through the
-          narration needs a Korean serif alongside it. Loaded from the CDN
-          rather than next/font so the build never depends on the network —
-          if the stylesheet fails, the OS Korean serifs in the .font-hylia
-          stack take over.
+          Cinzel for the engraved map lettering, EB Garamond for reading. From
+          the CDN rather than next/font so the build never needs the network;
+          if it fails, the Georgia fallbacks in --font-* keep the same feel.
         */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -33,15 +35,22 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        {/* The rule below targets pages/_document; this is the App Router
-            root layout, so the stylesheet does apply to every page. */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap"
         />
       </head>
-      <body className="h-full bg-canvas text-white antialiased">
+      <body className="min-h-dvh bg-navy-deep font-body text-parchment antialiased">
+        {/* Deep ocean wash behind everything — the sea the atlas floats on. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 60% at 50% 0%, #16305c 0%, #0a1730 45%, #050d1e 100%)",
+          }}
+        />
         {children}
       </body>
     </html>
