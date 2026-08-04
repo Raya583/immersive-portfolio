@@ -150,17 +150,33 @@ export function SectionOverlay({
 
       <div className="section-inner">
         {!openProject && (
-        <header className="section-head">
-          <button type="button" className="section-back font-hylia" onClick={onBack}>
-            <span aria-hidden="true">←</span> Back to map
-          </button>
+        <>
+        {/*
+          ── WHY THE BACK BUTTON IS NOT INSIDE .section-head ──────────────────
+          It used to be, positioned absolutely against it. That is fine while it
+          only ever sits at the top, and impossible to make sticky: a sticky
+          element sticks within its PARENT's box, and `.section-head` is about
+          190px tall, so the button would unstick the moment the title scrolled
+          past and travel off-screen with it.
 
+          As a child of `.section-inner` its containing block is the whole page,
+          which is what lets THE FORGE pin it. It stays `position: absolute` at
+          top-left everywhere else, and because `.section-inner` is
+          `position: relative` with the same content origin, that renders in
+          exactly the same place it always did.
+        */}
+        <button type="button" className="section-back font-hylia" onClick={onBack}>
+          <span aria-hidden="true">←</span> Back to map
+        </button>
+
+        <header className="section-head">
           <h1 className="section-title font-hylia" ref={headingRef} tabIndex={-1}>
             {section.name}
           </h1>
           <p className="section-sub">{section.subtitle}</p>
           <span className="section-rule" aria-hidden="true" />
         </header>
+        </>
         )}
 
         {section.built && section.id === "projects" ? (

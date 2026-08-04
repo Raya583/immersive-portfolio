@@ -50,6 +50,12 @@ export const CASE_IDS = {
   designApproach: "sec-design-approach",
   focus: "sec-focus",
   role: "sec-role",
+  tools: "sec-tools",
+  system: "sec-system",
+  audit: "sec-audit",
+  reflections: "sec-reflections",
+  engineering: "sec-engineering",
+  closing: "sec-closing",
   foundations: "sec-foundations",
   logo: "sec-logo",
   feature: "sec-feature",
@@ -75,6 +81,19 @@ export const CASE_SECTIONS: CaseSection[] = [
   },
   { id: CASE_IDS.focus, label: "Focus Areas", has: (p) => some(p.focusAreas) },
   { id: CASE_IDS.role, label: "Role", has: (p) => !!p.role.trim() },
+  { id: CASE_IDS.tools, label: "The Tools", has: (p) => some(p.tools) },
+  { id: CASE_IDS.audit, label: "The Audit", has: (p) => !!p.audit },
+  {
+    id: CASE_IDS.reflections,
+    label: "Reflections",
+    has: (p) => some(p.reflections),
+  },
+  {
+    id: CASE_IDS.engineering,
+    label: "Under the Hood",
+    has: (p) => some(p.engineering),
+  },
+  { id: CASE_IDS.system, label: "System", has: (p) => !!p.designSystem },
   {
     id: CASE_IDS.foundations,
     label: "Foundations",
@@ -84,6 +103,7 @@ export const CASE_SECTIONS: CaseSection[] = [
   { id: CASE_IDS.feature, label: "Key Feature", has: (p) => !!p.keyFeature },
   { id: CASE_IDS.asides, label: "Notes", has: (p) => some(p.asides) },
   { id: CASE_IDS.outcome, label: "Outcome", has: (p) => !!p.outcome },
+  { id: CASE_IDS.closing, label: "Closing", has: (p) => !!p.closing },
 ];
 
 /**
@@ -115,6 +135,14 @@ export const PROJECT_TABS: Record<string, SectionKey[]> = {
   Crustfolio: ["top", "approach", "process", "foundations", "feature", "outcome"],
 
   COGMU: ["top", "approach", "process", "foundations", "outcome"],
+
+  /**
+   * DEXOVO's pull is the product, the audit and the engineering. Six tabs is
+   * the ceiling this bar can hold, so Outcome and Closing are left off: both
+   * sit at the very bottom, which is exactly where a reader who has scrolled
+   * that far already is.
+   */
+  DEXOVO: ["top", "tools", "audit", "engineering", "system", "foundations"],
 };
 
 /**

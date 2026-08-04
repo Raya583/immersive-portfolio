@@ -17,6 +17,8 @@ import type { DriftKind } from "@/config/projectFlair";
  *   note        [ink]
  *   headphones  [ink]
  *   cap         [board, tassel, crown]
+ *   pokeball    [top, bottom, band]
+ *   spark       [ink]
  * Every position falls back, so a short array in config degrades rather than
  * putting `undefined` into fillStyle, where it would silently draw nothing.
  */
@@ -265,6 +267,72 @@ function cap(ctx: CanvasRenderingContext2D, L: number, c: string[]) {
   ctx.fill();
 }
 
+/**
+ * A capture sphere: a filled circle split across the middle, with a band and a
+ * button on the seam.
+ *
+ * ── WHY THE BUTTON IS DRAWN IN THE BAND COLOUR ─────────────────────────────
+ * At the sizes these drift by, a white button ringed in dark reads as a hole
+ * punched through the shape. Drawing the ring alone, in the same colour as the
+ * band, keeps the silhouette solid — which is the only part of this that
+ * survives at 14px anyway.
+ *
+ * `top` and `bottom` are separate rather than one colour plus a tint, so a
+ * config can put the yellow half up or the red half up without touching this.
+ */
+function pokeball(ctx: CanvasRenderingContext2D, L: number, c: string[]) {
+  const [top = "#c8102e", bottom = "#f2ebe6", band = "#1a0e0e"] = c;
+  const r = L * 0.5;
+
+  // Upper half.
+  ctx.fillStyle = top;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, Math.PI, 0);
+  ctx.fill();
+
+  // Lower half.
+  ctx.fillStyle = bottom;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI);
+  ctx.fill();
+
+  ctx.strokeStyle = band;
+  // The seam. Full width, so the two halves read as one object.
+  ctx.lineWidth = Math.max(1, L * 0.11);
+  ctx.beginPath();
+  ctx.moveTo(-r, 0);
+  ctx.lineTo(r, 0);
+  ctx.stroke();
+
+  // The button, as a ring rather than a filled disc. See the note above.
+  ctx.lineWidth = Math.max(1, L * 0.075);
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.28, 0, TAU);
+  ctx.stroke();
+}
+
+/**
+ * A four-pointed spark, drawn as two crossed tapers.
+ *
+ * The counterpart to the spheres: a field of nothing but Pokéballs reads as a
+ * pattern, and these break it up without adding a second recognisable object.
+ */
+function spark(ctx: CanvasRenderingContext2D, L: number, c: string[]) {
+  const ink = c[0] ?? "#f7da3b";
+  const r = L * 0.5;
+  // The waist. Small numbers give long thin points; this is a star, not a plus.
+  const w = L * 0.09;
+
+  ctx.fillStyle = ink;
+  ctx.beginPath();
+  ctx.moveTo(0, -r);
+  ctx.quadraticCurveTo(w, -w, r, 0);
+  ctx.quadraticCurveTo(w, w, 0, r);
+  ctx.quadraticCurveTo(-w, w, -r, 0);
+  ctx.quadraticCurveTo(-w, -w, 0, -r);
+  ctx.fill();
+}
+
 /** Draws one drift shape, centred on the current origin. */
 export function drawShape(
   ctx: CanvasRenderingContext2D,
@@ -278,5 +346,7 @@ export function drawShape(
   else if (kind === "pepper") pepper(ctx, size, colors);
   else if (kind === "note") note(ctx, size, colors);
   else if (kind === "cap") cap(ctx, size, colors);
+  else if (kind === "pokeball") pokeball(ctx, size, colors);
+  else if (kind === "spark") spark(ctx, size, colors);
   else headphones(ctx, size, colors);
 }

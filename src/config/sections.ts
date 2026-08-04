@@ -112,5 +112,6 @@ export const FORGE = {
   /** Shown under the page title. */
   intro:
     "Four things built end to end: a music-recognition app, an award-winning " +
-    "interactive portfolio, a college-finder, and a companion app in progress.",
+    "interactive portfolio, a college-finder, and a five-tool Pokédex running " +
+    "on live data.",
 } as const;

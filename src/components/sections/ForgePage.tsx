@@ -50,16 +50,28 @@ const credentialsFor = (title: string) =>
     .map((a) => achievements.find((x) => x.title === a))
     .filter((a): a is (typeof achievements)[number] => Boolean(a));
 
+/**
+ * The call-to-action links, strongest claim FIRST.
+ *
+ * A live deployed app outranks a prototype of the same thing, so it leads and
+ * gets its own label: "Open the live app" is a different promise from "Open
+ * the prototype", and a reader who clicks the second expecting the first is
+ * entitled to feel misled.
+ */
 const linksOf = (project: Project) => {
   const l = project.links;
   if (!l) return [];
   return [
+    { href: l.liveApp, label: "Open the live app" },
     { href: l.website, label: "Visit the site" },
     { href: l.prototype, label: "Open the prototype" },
     { href: l.repo, label: "Source" },
     { href: l.caseStudy, label: "Read the case study" },
   ].filter((x): x is { href: string; label: string } => Boolean(x.href));
 };
+
+/** A project is "live" when it has a deployed build you can actually use. */
+const isLive = (project: Project) => Boolean(project.links?.liveApp);
 
 /** An empty frame, for entries whose artwork does not exist yet. */
 function QuestPlaceholder({ title }: { title: string }) {
@@ -149,8 +161,16 @@ function QuestRow({
             {project.title}
           </span>
           {project.hook && <span className="quest-hook">{project.hook}</span>}
-          {creds.length > 0 && (
+          {(creds.length > 0 || isLive(project)) && (
             <span className="quest-seals">
+              {isLive(project) && (
+                <span className="quest-seal quest-seal-live">
+                  <span className="quest-seal-mark" aria-hidden="true">
+                    ●
+                  </span>
+                  Live app
+                </span>
+              )}
               {creds.map((c) => (
                 <span key={c.title} className="quest-seal">
                   <span className="quest-seal-mark" aria-hidden="true">
@@ -170,6 +190,56 @@ function QuestRow({
     </li>
   );
 }
+
+/**
+ * Readable ink for a coloured pill: whichever of the two candidates actually
+ * contrasts more with the swatch, measured rather than guessed.
+ *
+ * ── WHY THIS IS COMPUTED AND NOT CONFIGURED ────────────────────────────────
+ * The badge colours come from the PROJECT's data and can be any hue. DEXOVO's
+ * own stylesheet puts white on all eighteen of its types, which on the pale
+ * ones (Electric, Ice, Flying) lands near 1.6:1 and makes the label a ghost.
+ * Reproducing that faithfully would be reproducing a bug.
+ *
+ * ── WHY MAX-CONTRAST AND NOT A LIGHTNESS THRESHOLD ─────────────────────────
+ * The first version of this switched on relative luminance crossing a fixed
+ * threshold. That is the usual shortcut and it was wrong here: at 0.45 it sent
+ * nine of the eighteen to white, including Normal at 2.19:1 and Fairy at
+ * 2.52:1. Computing both ratios and taking the better one has no threshold to
+ * tune and cannot be wrong in that particular way.
+ *
+ * One of the eighteen still lands fractionally under 4.5:1 on its best option
+ * (Ground, at 4.45) because a mid-tone saturated orange has no good answer.
+ * Changing the swatch itself to fix that would misrepresent the product's
+ * palette, which is the thing this specimen exists to show.
+ */
+const INK_DARK = "#12090a";
+const INK_LIGHT = "#ffffff";
+
+/** WCAG relative luminance. */
+const luminance = (hex: string): number => {
+  const h = hex.replace("#", "");
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
+  const ch = (i: number) => {
+    const v = parseInt(full.slice(i * 2, i * 2 + 2), 16) / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * ch(0) + 0.7152 * ch(1) + 0.0722 * ch(2);
+};
+
+const contrast = (a: string, b: string): number => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+};
+
+const pillInk = (hex: string): string =>
+  contrast(hex, INK_DARK) >= contrast(hex, INK_LIGHT) ? INK_DARK : INK_LIGHT;
 
 /** The little mark inside a call-to-action, chosen per project. */
 function CtaMark({ kind }: { kind?: "slice" | "note" }) {
@@ -348,6 +418,19 @@ function CaseStudy({
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
             )}
+          </p>
+        )}
+
+        {/*
+          The LIVE mark. Only one project on this site is a running product
+          rather than a design artefact, and that is the single most useful
+          thing a recruiter can learn from this page — so it is stated before
+          the title rather than left to be inferred from a link label.
+        */}
+        {isLive(project) && (
+          <p className="cs-live">
+            <span className="cs-live-dot" aria-hidden="true" />
+            Live app
           </p>
         )}
 
@@ -531,6 +614,215 @@ function CaseStudy({
         </section>
       )}
 
+      {/*
+        ── THE TOOLS ────────────────────────────────────────────────────────
+        For a product that is several connected tools rather than one screen.
+        Each gets its number, its explanation and its own shots, so the set can
+        be read as peers instead of as a sequence.
+      */}
+      {project.tools && project.tools.length > 0 && (
+        <section className="cs-block cs-block-wide" id={CASE_IDS.tools}>
+          <h4 className="cs-label">The Tools</h4>
+          <ol className="cs-tools">
+            {project.tools.map((t) => (
+              <li key={t.name} className="cs-tool">
+                <div className="cs-tool-head">
+                  <span className="cs-tool-n" aria-hidden="true">
+                    {t.n}
+                  </span>
+                  <h5 className="cs-tool-name">{t.name}</h5>
+                </div>
+                <p className="cs-body cs-tool-body">{t.body}</p>
+                {t.shots && t.shots.length > 0 && (
+                  <ul
+                    className={
+                      t.shots.length > 1
+                        ? "cs-tool-shots cs-tool-shots-pair"
+                        : "cs-tool-shots"
+                    }
+                  >
+                    {t.shots.map((s) => (
+                      <li key={s.src} className="cs-tool-shot">
+                        <Image
+                          src={s.src}
+                          alt={s.alt}
+                          width={2000}
+                          height={1250}
+                          sizes={
+                            t.shots!.length > 1
+                              ? "(max-width: 820px) 92vw, 30rem"
+                              : "(max-width: 820px) 92vw, 62rem"
+                          }
+                          className="cs-shot-img"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {/*
+        ── THE AUDIT ────────────────────────────────────────────────────────
+        A real <table> with a real <caption>: this is tabular data, and a grid
+        of divs would read to a screen reader as an undifferentiated list of
+        numbers with no idea which column any of them belong to.
+      */}
+      {project.audit && (
+        <section className="cs-block cs-block-wide" id={CASE_IDS.audit}>
+          <h4 className="cs-label">The Audit</h4>
+          <p className="cs-lede">{project.audit.intro}</p>
+
+          <div className="cs-table-scroll">
+            <table className="cs-audit">
+              <caption className="sr-only">
+                Design system audit, before and after
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Measured</th>
+                  <th scope="col">{project.audit.columns?.before ?? "Before"}</th>
+                  <th scope="col">{project.audit.columns?.after ?? "After"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {project.audit.rows.map((r) => (
+                  <tr key={r.label}>
+                    <th scope="row">{r.label}</th>
+                    <td className="cs-audit-before">{r.before}</td>
+                    <td className="cs-audit-after">{r.after}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {project.audit.note && <p className="cs-note">{project.audit.note}</p>}
+
+          {project.audit.after?.map((para) => (
+            <p key={para.slice(0, 40)} className="cs-body cs-body-wide">
+              {para}
+            </p>
+          ))}
+        </section>
+      )}
+
+      {project.reflections && project.reflections.length > 0 && (
+        <section className="cs-block cs-block-wide" id={CASE_IDS.reflections}>
+          <h4 className="cs-label">What I&rsquo;d Do Differently</h4>
+          <ul className="cs-reflections">
+            {project.reflections.map((r) => (
+              <li key={r.title} className="cs-reflection">
+                <h5 className="cs-reflection-title">{r.title}</h5>
+                <p className="cs-body">{r.body}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/*
+        ── UNDER THE HOOD ───────────────────────────────────────────────────
+        Sits AFTER the audit and BEFORE the design system, because the audit
+        ends on "so I rebuilt it in React" and this is what that turned out to
+        involve. Moving it later breaks that hand-off.
+      */}
+      {project.engineering && project.engineering.length > 0 && (
+        <section className="cs-block cs-block-wide" id={CASE_IDS.engineering}>
+          <h4 className="cs-label">Under the Hood</h4>
+          <ol className="cs-eng">
+            {project.engineering.map((e, i) => (
+              <li key={e.title} className="cs-eng-item">
+                <span className="cs-eng-n" aria-hidden="true">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="cs-eng-text">
+                  <h5 className="cs-eng-title">{e.title}</h5>
+                  <p className="cs-body">{e.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {/*
+        ── THE DESIGN SYSTEM ────────────────────────────────────────────────
+        The rules, as rules. The swatches are real elements rather than a
+        picture of swatches — see the note on `designSystem` in portfolio.ts.
+      */}
+      {project.designSystem && (
+        <section className="cs-block cs-block-wide" id={CASE_IDS.system}>
+          <h4 className="cs-label">The Design System</h4>
+          <p className="cs-lede">{project.designSystem.intro}</p>
+
+          <ul className="cs-rules">
+            {project.designSystem.rules.map((r) => (
+              <li key={r.label} className="cs-rule">
+                <h5 className="cs-rule-label">{r.label}</h5>
+                <p className="cs-body">{r.body}</p>
+              </li>
+            ))}
+          </ul>
+
+          {project.designSystem.swatches &&
+            project.designSystem.swatches.length > 0 && (
+              <ul className="cs-swatches" aria-label="Type colour system">
+                {project.designSystem.swatches.map((s) => (
+                  <li
+                    key={s.name}
+                    className="cs-swatch"
+                    style={
+                      {
+                        // The GRADIENT is the tile, because it is the surface
+                        // the badge actually has to survive against in the
+                        // product. A tile of the pale card tint would flatter
+                        // the badge into looking more legible than it is.
+                        backgroundImage: `linear-gradient(150deg, ${s.gradient[0]}, ${s.gradient[1]})`,
+                      } as CSSProperties
+                    }
+                  >
+                    {/* The badge carries the name, which is the whole rule
+                        this section is describing — so the specimen works the
+                        way the system does. */}
+                    <span
+                      className="cs-swatch-badge"
+                      style={
+                        {
+                          background: s.badge,
+                          color: pillInk(s.badge),
+                        } as CSSProperties
+                      }
+                    >
+                      {s.name}
+                    </span>
+                    <span className="cs-swatch-foot">
+                      {/* The third role, as a bar rather than a third pill:
+                          the card tint is a SURFACE in the product, and a
+                          pill would imply it is another label. */}
+                      <span
+                        className="cs-swatch-card"
+                        style={{ background: s.card } as CSSProperties}
+                        aria-hidden="true"
+                      />
+                      <span className="cs-swatch-hex">
+                        {s.badge.toUpperCase()}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+          {project.designSystem.note && (
+            <p className="cs-note">{project.designSystem.note}</p>
+          )}
+        </section>
+      )}
+
       {project.foundations && (
         <section className="cs-block cs-block-wide" id={CASE_IDS.foundations}>
           <h4 className="cs-label">Design Foundations</h4>
@@ -702,6 +994,24 @@ function CaseStudy({
             </div>
           )}
         </dl>
+      )}
+
+      {project.closing && (
+        <section className="cs-closing" id={CASE_IDS.closing}>
+          <h4 className="cs-closing-title">{project.closing.title}</h4>
+          <p className="cs-closing-body">{project.closing.body}</p>
+        </section>
+      )}
+
+      {/*
+        Attribution and legal, LAST. A fan project's disclaimer belongs at the
+        foot of the page where a footnote goes — putting it near the top reads
+        as an apology for the work rather than as a statement about rights.
+      */}
+      {project.disclaimer && (
+        <footer className="cs-disclaimer">
+          <p>{project.disclaimer}</p>
+        </footer>
       )}
     </article>
   );

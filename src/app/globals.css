@@ -1043,7 +1043,6 @@ body {
 
 .section-head {
   position: relative;
-  padding-top: 3.6rem;
 }
 
 /* ── Buttons: hairline pills, no fill until you touch them ────────────────── */
@@ -1068,10 +1067,26 @@ body {
     color 200ms ease;
 }
 
+/*
+ * ── IN FLOW, NOT ABSOLUTE ─────────────────────────────────────────────────
+ * This was `position: absolute; top: 0; left: 0` against `.section-head`.
+ * Moving it up to `.section-inner` (so THE FORGE can pin it) broke that:
+ * absolute offsets resolve against the containing block's PADDING box, and
+ * `.section-inner` carries a clamped padding that `.section-head` did not, so
+ * the button leapt to the very top-left corner of the page on all five
+ * sections.
+ *
+ * Re-deriving the offsets from that same clamp would work and would be a trap:
+ * two copies of one value, silently wrong the first time either is tuned.
+ * Normal flow needs no offsets at all, lands in the same place, and is the
+ * only form `position: sticky` can take anyway.
+ */
 .section-back {
-  position: absolute;
-  top: 0;
-  left: 0;
+  display: inline-flex;
+  align-items: center;
+  /* Stands in for `.section-head`'s old `padding-top`, which existed purely to
+     clear this button when it was absolute. */
+  margin-bottom: 1.45rem;
 }
 
 .case-back {
@@ -7009,3 +7024,574 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .trail-ship { display: none; }
 }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   CASE STUDY — THE TOOLS, THE SYSTEM, THE AUDIT, REFLECTIONS
+
+   Added for DEXOVO, which is the first project here that is a PRODUCT made of
+   several tools rather than a single designed artefact. Everything below is
+   themed entirely from `--pt-*`, so these sections work for any project that
+   fills the matching fields in portfolio.ts — none of it is DEXOVO-specific.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* ── The tools ────────────────────────────────────────────────────────────── */
+.cs-tools {
+  display: grid;
+  gap: clamp(2.4rem, 5vw, 3.6rem);
+  margin: clamp(1.6rem, 4vw, 2.4rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-tool {
+  display: grid;
+  gap: 1rem;
+}
+
+.cs-tool-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+}
+
+/* The number, in the project's display face. Sized off the name beside it so
+   the pair stays locked as the heading scales. */
+.cs-tool-n {
+  flex: none;
+  font-family: var(--pt-heading-font);
+  font-size: clamp(1.5rem, 4vw, 2.3rem);
+  font-weight: var(--pt-heading-weight, 600);
+  line-height: 1;
+  color: var(--pt-accent);
+  opacity: 0.85;
+}
+
+.cs-tool-name {
+  margin: 0;
+  font-family: var(--pt-heading-font);
+  font-size: clamp(1.25rem, 3.2vw, 1.8rem);
+  font-weight: var(--pt-heading-weight, 600);
+  letter-spacing: var(--pt-heading-tracking);
+  line-height: 1.15;
+  color: var(--pt-heading-ink);
+}
+
+.cs-tool-body {
+  max-width: 42rem;
+}
+
+.cs-tool-shots {
+  display: grid;
+  gap: clamp(0.9rem, 2vw, 1.4rem);
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+  Two shots side by side, and ONLY above the breakpoint. A pair of 2000px-wide
+  desktop screenshots in a single phone-width column is two screens of scroll
+  for one tool, so below 820px the grid collapses and the images simply stack.
+*/
+@media (min-width: 821px) {
+  .cs-tool-shots-pair {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.cs-tool-shot {
+  overflow: hidden;
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius);
+  background: var(--pt-bg-deep);
+  box-shadow: var(--pt-shadow);
+}
+
+.cs-tool-shot .cs-shot-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ── The design system ────────────────────────────────────────────────────── */
+.cs-rules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: clamp(0.9rem, 2vw, 1.4rem);
+  margin: clamp(1.6rem, 4vw, 2.4rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+  Four rules land as 3 + 1 in a three-column grid, and the orphan reads as a
+  mistake. A quantity query switches to two-across at exactly four, which makes
+  a 2x2 block. Browsers without `:has()` keep the three-column layout, which is
+  the current behaviour rather than a broken one.
+*/
+.cs-rules:has(> :nth-child(4):last-child) {
+  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+}
+
+.cs-rule {
+  padding: 1.15rem 1.4rem;
+  border-radius: var(--pt-radius);
+  border-top: 3px solid var(--pt-accent);
+  background: var(--pt-surface);
+  box-shadow: var(--pt-shadow);
+}
+
+.cs-rule-label {
+  margin: 0 0 0.4rem;
+  font-family: var(--pt-heading-font);
+  font-size: 1.06rem;
+  font-weight: var(--pt-heading-weight, 600);
+  letter-spacing: var(--pt-heading-tracking);
+  color: var(--pt-heading-ink);
+}
+
+/*
+  ── THE TYPE SWATCHES ──────────────────────────────────────────────────────
+  Each tile IS the rule it demonstrates: the tile is the card colour, the pill
+  on it is the badge colour, and the pill is what carries the name. Reading it
+  is the argument the section is making.
+*/
+.cs-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0.6rem;
+  margin: clamp(1.8rem, 4vw, 2.6rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+  The tile is the GRADIENT, set inline from the project's data. Every other
+  value here is theme-driven; only the three colours the system owns come from
+  the content file.
+*/
+.cs-swatch {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.1rem;
+  min-height: 6.2rem;
+  padding: 0.8rem 0.75rem;
+  border-radius: calc(var(--pt-radius) * 0.7);
+  box-shadow: var(--pt-shadow);
+}
+
+.cs-swatch-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* The card tint, as a surface sample. Hairlined in white at low alpha so a
+   pale tint still has an edge against a mid-tone gradient. */
+.cs-swatch-card {
+  display: block;
+  height: 0.55rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.cs-swatch-badge {
+  align-self: flex-start;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-family: var(--pt-body-font);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  /* Ink comes from `pillInk()` in ForgePage, per badge. See the note there:
+     the product sets white on all eighteen, and on its yellow that is ~1.6:1. */
+}
+
+.cs-swatch-hex {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  /*
+    Near-white at low alpha, NOT the dark ink this used to carry. The tile
+    background changed from a pale card tint to a mid-to-dark gradient, and
+    dark-on-dark disappeared on Dark, Ghost and Dragon. White with a shadow
+    holds on all eighteen because every gradient in the set is mid-tone or
+    deeper by design.
+  */
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+/*
+  A pulled-out remark. Rule on the accent side, no fill — a filled callout in
+  a page that already uses filled cards for `.cs-rule` reads as another card.
+*/
+.cs-note {
+  max-width: 42rem;
+  margin: clamp(1.8rem, 4vw, 2.4rem) 0 0;
+  padding: 0.15rem 0 0.15rem 1.3rem;
+  border-left: 3px solid var(--pt-accent);
+  font-size: clamp(0.94rem, 2.2vw, 1.02rem);
+  line-height: 1.75;
+  color: var(--pt-ink-soft);
+}
+
+/* ── The audit table ──────────────────────────────────────────────────────── */
+
+/*
+  The scroller. A three-column table of counts has a floor width below which
+  the labels wrap to four lines each, so on a phone it scrolls sideways INSIDE
+  this box rather than forcing the whole page to.
+*/
+.cs-table-scroll {
+  overflow-x: auto;
+  margin: clamp(1.6rem, 4vw, 2.4rem) 0 0;
+  /* Space for the scrollbar, so it never sits on the last row. */
+  padding-bottom: 0.35rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cs-audit {
+  width: 100%;
+  min-width: 30rem;
+  border-collapse: collapse;
+  font-size: clamp(0.92rem, 2.1vw, 1rem);
+}
+
+.cs-audit th,
+.cs-audit td {
+  text-align: left;
+  vertical-align: top;
+}
+
+.cs-audit thead th {
+  padding: 0 0 0.9rem;
+  font-family: var(--pt-body-font);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pt-ink-faint);
+}
+
+.cs-audit tbody th {
+  width: 44%;
+  padding: 1.05rem 1.2rem 1.05rem 0;
+  border-top: 1px solid var(--pt-line);
+  font-family: var(--pt-body-font);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--pt-ink);
+}
+
+.cs-audit tbody td {
+  padding: 1.05rem 1.2rem 1.05rem 0;
+  border-top: 1px solid var(--pt-line);
+  line-height: 1.5;
+}
+
+/* Before is the state being left behind, so it sits back; after is the result,
+   so it comes forward in the display face and the accent. */
+.cs-audit-before {
+  width: 26%;
+  color: var(--pt-ink-faint);
+}
+
+.cs-audit-after {
+  width: 30%;
+  font-family: var(--pt-heading-font);
+  font-weight: var(--pt-heading-weight, 600);
+  letter-spacing: var(--pt-heading-tracking);
+  color: var(--pt-accent);
+}
+
+.cs-audit + .cs-note,
+.cs-table-scroll + .cs-note {
+  margin-top: clamp(1.6rem, 3.5vw, 2.2rem);
+}
+
+.cs-audit ~ .cs-body-wide,
+.cs-table-scroll ~ .cs-body-wide {
+  margin-top: 1.2rem;
+}
+
+/* ── Reflections ──────────────────────────────────────────────────────────── */
+.cs-reflections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: clamp(0.9rem, 2vw, 1.4rem);
+  margin: clamp(1.6rem, 4vw, 2.4rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-reflection {
+  padding: 1.3rem 1.4rem;
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius);
+  background: var(--pt-surface-alt);
+}
+
+.cs-reflection-title {
+  margin: 0 0 0.45rem;
+  font-family: var(--pt-heading-font);
+  font-size: 1.06rem;
+  font-weight: var(--pt-heading-weight, 600);
+  letter-spacing: var(--pt-heading-tracking);
+  color: var(--pt-accent);
+}
+
+/* ── The disclaimer ───────────────────────────────────────────────────────── */
+.cs-disclaimer {
+  max-width: 46rem;
+  margin: clamp(3rem, 7vw, 4.5rem) 0 0;
+  padding: clamp(1.2rem, 3vw, 1.6rem) 0 0;
+  border-top: 1px solid var(--pt-line);
+}
+
+.cs-disclaimer p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--pt-ink-faint);
+}
+
+/* ── Under the hood ───────────────────────────────────────────────────────── */
+
+/*
+  Numbered, and wider-set than `.cs-rule` cards.
+
+  These are three technical claims that each need a paragraph to land, and a
+  three-across card grid squeezed them into columns too narrow to explain
+  anything in. A numbered list lets each one run at a readable measure, and the
+  numeral does the scanning work the card edges were doing.
+*/
+.cs-eng {
+  display: grid;
+  gap: clamp(1.4rem, 3vw, 2rem);
+  margin: clamp(1.6rem, 4vw, 2.4rem) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: eng;
+}
+
+.cs-eng-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 clamp(0.9rem, 2vw, 1.4rem);
+  align-items: start;
+  padding: clamp(1.2rem, 2.6vw, 1.6rem) clamp(1.2rem, 2.6vw, 1.7rem);
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius);
+  background: var(--pt-surface-alt);
+}
+
+.cs-eng-n {
+  font-family: var(--pt-heading-font);
+  font-size: clamp(1.1rem, 2.6vw, 1.5rem);
+  font-weight: var(--pt-heading-weight, 600);
+  line-height: 1.2;
+  color: var(--pt-accent);
+  opacity: 0.8;
+}
+
+.cs-eng-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--pt-heading-font);
+  font-size: clamp(1.1rem, 2.6vw, 1.35rem);
+  font-weight: var(--pt-heading-weight, 600);
+  letter-spacing: var(--pt-heading-tracking);
+  line-height: 1.25;
+  color: var(--pt-heading-ink);
+}
+
+.cs-eng-text .cs-body {
+  max-width: 44rem;
+}
+
+/* The numeral drops out on phones: at that width it eats a quarter of the
+   line, and the card edge is already doing the separating. */
+@media (max-width: 560px) {
+  .cs-eng-item {
+    grid-template-columns: 1fr;
+  }
+  .cs-eng-n {
+    display: none;
+  }
+}
+
+/* ── The closing ──────────────────────────────────────────────────────────── */
+
+/*
+  Position, not evidence. Centred and set large, with nothing else in the band,
+  because it is the one part of the page that is a statement rather than a
+  demonstration and it has to be able to sit on its own.
+*/
+.cs-closing {
+  max-width: 44rem;
+  margin: clamp(3.4rem, 8vw, 5.5rem) auto 0;
+  padding: clamp(2rem, 5vw, 3rem) clamp(1.4rem, 4vw, 2.6rem);
+  border-top: 1px solid var(--pt-line);
+  border-bottom: 1px solid var(--pt-line);
+  text-align: center;
+}
+
+.cs-closing-title {
+  margin: 0 0 0.9rem;
+  font-family: var(--pt-body-font);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  text-transform: uppercase;
+  color: var(--pt-accent);
+}
+
+.cs-closing-body {
+  margin: 0;
+  font-family: var(--pt-heading-font);
+  font-size: clamp(1.15rem, 3vw, 1.6rem);
+  font-weight: var(--pt-heading-weight, 600);
+  line-height: 1.5;
+  letter-spacing: var(--pt-heading-tracking);
+  color: var(--pt-heading-ink);
+  text-wrap: balance;
+}
+
+/* ── DEXOVO: the two places a very bright accent needs holding back ───────── */
+
+/*
+ * The outcome panel is a full-bleed fill of `--pt-accent` on every other
+ * project, and those accents are muted enough to carry it. DEXOVO's is Poké
+ * Ball yellow, which at full width is the loudest thing on a page whose whole
+ * argument is made in dark maroon — and worse, the sticky glass header has to
+ * pass over it, which washed the tabs out to near-unreadable.
+ *
+ * Same information, inverted: the app's own card colour, with the yellow doing
+ * what it does everywhere else on this page — marking the edge and setting the
+ * type. Scoped by `data-project` exactly like the Crustfolio overrides above.
+ */
+[data-project="DEXOVO"] .cs-outcome {
+  background: var(--pt-surface);
+  color: var(--pt-ink);
+  border: 1px solid var(--pt-line);
+  border-left: 4px solid var(--pt-accent);
+}
+
+[data-project="DEXOVO"] .cs-outcome .cs-label {
+  color: var(--pt-accent);
+  opacity: 1;
+}
+
+[data-project="DEXOVO"] .cs-outcome .cs-label::after {
+  background: var(--pt-line);
+  opacity: 1;
+}
+
+[data-project="DEXOVO"] .cs-outcome-text {
+  color: var(--pt-heading-ink);
+}
+
+/*
+ * The lifted glass firms up further on this theme. The default 80% leaves 20%
+ * of whatever is underneath showing through, which is fine over body copy and
+ * not over a saturated panel.
+ */
+[data-project="DEXOVO"] .cs-nav[data-lifted] .cs-nav-bar {
+  --pt-glass-bg-lifted: color-mix(in srgb, var(--pt-bg) 92%, transparent);
+}
+
+/* ── The LIVE mark ────────────────────────────────────────────────────────── */
+
+/*
+ * Shown only on a project with `links.liveApp` — a deployed build you can use,
+ * as opposed to a prototype. Themed from `--pt-*`, so it belongs to whichever
+ * project earns it rather than being DEXOVO's.
+ */
+.cs-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+  padding: 0.3rem 0.85rem 0.3rem 0.7rem;
+  border: 1px solid var(--pt-accent);
+  border-radius: 999px;
+  background: var(--pt-accent-soft);
+  font-family: var(--pt-body-font);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pt-accent);
+}
+
+/* The pulse. Small, slow, and on the DOT only — a pulsing label is an advert,
+   a pulsing indicator is a status light. */
+.cs-live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--pt-accent);
+  animation: cs-live-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes cs-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 var(--pt-accent-soft);
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 0.28rem transparent;
+  }
+}
+
+/* The quest-log row's version, which sits in the seal strip and therefore
+   inherits the seal's shape. It differs only in taking the row's accent
+   rather than the award colours. */
+.quest-seal-live {
+  background: var(--row-badge-bg, var(--row-accent));
+  color: var(--row-badge-ink, #fff);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-live-dot {
+    animation: none;
+  }
+}
+
+/* ── THE FORGE: a back button that stays put ──────────────────────────────── */
+
+/*
+ * Everywhere else `.section-back` is absolute at the top of `.section-inner`
+ * and scrolls away with the page. On the quest log it pins instead.
+ *
+ * Measured before changing it: the list scrolls 350px at 1440x900 and 1363px
+ * at 390x844, and the button left the viewport entirely in both cases (to
+ * y -286 and y -1339). That is the whole justification — on a page short
+ * enough not to scroll this would be pointless decoration.
+ *
+ * Scoped to the LIST, not the case study: `:not([data-project])` matters
+ * because an open case study hides `.section-head` and puts its own sticky
+ * "← THE FORGE" bar up there instead, and two pinned back buttons in the same
+ * corner is one too many.
+ */
+.section-page[data-page="projects"]:not([data-project]) .section-back {
+  position: sticky;
+  top: clamp(0.75rem, 2vw, 1.25rem);
+  /* Above the quest rows that now pass underneath it. */
+  z-index: 6;
+
+  /* Frosted, because content scrolls behind it now. The per-sky rules above
+     already give it a translucent fill; this is what stops that fill from
+     showing a quest row straight through. */
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.22),
+    0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+

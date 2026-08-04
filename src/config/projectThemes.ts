@@ -96,9 +96,64 @@ const accentOnly = (accent: string, accentSoft: string): ProjectTheme => ({
 });
 
 export const PROJECT_THEMES: Record<string, ProjectTheme> = {
-  // TODO: placeholder accent — a plausible starting point, not a decision.
-  // Promote to a full theme like the three below when its page gets built.
-  DEXOVO: accentOnly("#1f8a70", "rgba(31, 138, 112, 0.12)"),
+  /**
+   * DEXOVO — the app's own tokens, not an interpretation of them.
+   *
+   * Every value below is lifted from the product's `:root` block: the oxblood
+   * shell it is built on, and the two Pokéball colours it accents with. A
+   * Pokédex is a red-and-yellow object before it is anything else, and the app
+   * puts both on a deep maroon rather than on white, which is what stops it
+   * reading as a toy.
+   *
+   * Dark theme, so surfaces sit LIGHTER than the page and the ink is off-white.
+   */
+  DEXOVO: {
+    /*
+     * The page runs #211514 over #17100F, so it darkens toward the edges the
+     * way the app's own shell does. Surfaces are a LITERAL colour here rather
+     * than the translucent white the other dark themes use: #3B1F1D is the
+     * app's card, and mixing it as an alpha wash over two different page
+     * tones gave two different card colours on one page.
+     */
+    bg: "#211514",
+    bgDeep: "#17100F",
+    surface: "#3B1F1D",
+    surfaceAlt: "rgba(59, 31, 29, 0.55)",
+
+    ink: "#F5EAEA",
+    inkSoft: "rgba(232, 214, 214, 0.8)",
+    inkFaint: "rgba(198, 165, 165, 0.62)",
+    headingInk: "#FBF3F3",
+
+    /*
+     * Yellow leads and red supports, which is the opposite of a Poké Ball and
+     * deliberate: #D9102F on #211514 is two dark reds touching, and the
+     * contrast lands near 3.4:1 — fine for a large mark, not for a link. The
+     * yellow clears 10:1 on the same ground, so it carries anything that has
+     * to be READ, and the red is kept for seals and the smaller marks.
+     */
+    accent: "#F7C928",
+    accentSoft: "rgba(247, 201, 40, 0.15)",
+    accentInk: "#17100F",
+    accent2: "#D9102F",
+    accent2Soft: "rgba(217, 16, 47, 0.2)",
+
+    line: "#5A3636",
+    lineStrong: "rgba(198, 165, 165, 0.42)",
+
+    headingFont: "var(--font-port-lligat), 'Trebuchet MS', sans-serif",
+    bodyFont: "var(--font-inter), system-ui, sans-serif",
+    headingTracking: "-0.01em",
+    // 400, not 600. See the note in app/layout.tsx: the family ships one
+    // weight, and asking for more gets a synthesised fake bold.
+    headingWeight: "400",
+
+    radius: "14px",
+    shadow:
+      "0 1px 2px rgba(0,0,0,.45), 0 6px 18px rgba(0,0,0,.4), 0 18px 44px rgba(0,0,0,.4)",
+    shadowLift:
+      "0 2px 6px rgba(0,0,0,.5), 0 12px 30px rgba(0,0,0,.5), 0 30px 70px rgba(0,0,0,.55)",
+  },
 
   /**
    * FUTURX — an ed-tech platform, and the strongest project here. Deep indigo

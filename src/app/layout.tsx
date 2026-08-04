@@ -8,6 +8,7 @@ import {
   Outfit,
   Crimson_Text,
   Inter,
+  Port_Lligat_Sans,
 } from "next/font/google";
 import "./globals.css";
 
@@ -90,12 +91,29 @@ const crimson = Crimson_Text({
   weight: ["400", "600", "700"],
 });
 
-/** FUTURX's face: neutral and highly legible, which is what a platform people
- *  have to trust should sound like. */
+/** FUTURX's face, and DEXOVO's body copy: neutral and highly legible, which is
+ *  what a platform people have to trust should sound like. */
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
+});
+
+/**
+ * DEXOVO's display face, taken from the project itself — the app sets its
+ * headings and every number in it.
+ *
+ * Single weight, because that is all the family HAS. Port Lligat Sans ships
+ * regular only, so a theme asking for 700 here would get a browser-synthesised
+ * fake bold, which smears a face whose whole character is its even stroke.
+ * DEXOVO's theme therefore sets `headingWeight: "400"` rather than the 600-700
+ * the other projects use.
+ */
+const portLligat = Port_Lligat_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-port-lligat",
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
@@ -112,7 +130,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${dmSans.variable} ${playfair.variable} ${karla.variable} ${spaceGrotesk.variable} ${outfit.variable} ${crimson.variable} ${inter.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${dmSans.variable} ${playfair.variable} ${karla.variable} ${spaceGrotesk.variable} ${outfit.variable} ${crimson.variable} ${inter.variable} ${portLligat.variable}`}>
       <body>{children}</body>
     </html>
   );

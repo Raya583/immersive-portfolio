@@ -25,7 +25,9 @@ export type DriftKind =
   | "pepper"
   | "note"
   | "headphones"
-  | "cap";
+  | "cap"
+  | "pokeball"
+  | "spark";
 
 export interface DriftField {
   /** Desktop count. */
@@ -41,6 +43,8 @@ export interface DriftField {
    *   pepper      [flesh, seed]
    *   note        [ink]
    *   headphones  [ink]
+ *   pokeball    [top, bottom, band]
+ *   spark       [ink]
    */
   mix: { kind: DriftKind; weight: number; colors: string[] }[];
   /** Size in px, roughly the widest dimension. */
@@ -152,6 +156,100 @@ export interface ProjectFlair {
 }
 
 export const PROJECT_FLAIR: Record<string, ProjectFlair> = {
+  /**
+   * DEXOVO — oxblood, with capture spheres and sparks drifting through it.
+   *
+   * ── WHY THE SPHERES RISE ─────────────────────────────────────────────────
+   * A thrown ball goes up. Falling ones would read as dropped, which is the
+   * same reasoning as FUTURX's caps below, and it is the difference between a
+   * field that feels like the subject and one that feels like weather.
+   *
+   * ── WHY THERE ARE TWO SHAPES ─────────────────────────────────────────────
+   * Spheres alone tile: the eye finds the repeat within a second or two
+   * because every one of them is the same silhouette at a different size. The
+   * sparks are three to one against, so they read as an accent on a field of
+   * spheres rather than as a second field.
+   */
+  DEXOVO: {
+    drift: {
+      count: 15,
+      mobileCount: 7,
+      mix: [
+        {
+          kind: "pokeball",
+          weight: 3,
+          // [top, bottom, band]. The pale half is warm off-white rather than
+          // pure white — #fff on oxblood is a hole, and these sit behind text.
+          colors: ["#d9102f", "#efe2e2", "#17100f"],
+        },
+        { kind: "spark", weight: 1, colors: ["#f7c928"] },
+      ],
+      /*
+       * The floor is 16. Below roughly 14px the band and the button collapse
+       * into one dark smear and the sphere reads as a plain dot — the seam is
+       * the entire reason it is recognisable.
+       */
+      size: [16, 42],
+      // Negative rises. Slow: a fast one reads as an error, not as a throw.
+      speed: [-26, -9],
+      sway: [14, 50],
+      swaySpeed: [0.04, 0.12],
+      // A sphere is radially symmetric apart from its seam, so a little spin
+      // is what tells you it is turning at all.
+      spin: [-0.09, 0.09],
+      /*
+       * 0.08-0.2, lower than FUTURX's 0.11-0.28. These shapes carry a
+       * saturated red where the caps were a desaturated blue, and equal alpha
+       * on this page put them level with the body copy.
+       */
+      opacity: [0.08, 0.2],
+    },
+
+    row: {
+      /**
+       * The row, in the app's own colours: the oxblood shell, and the yellow
+       * header bar it puts its mark on. The gradient runs toward red on the
+       * right so the row has somewhere to go under the pointer.
+       */
+      panel:
+        "linear-gradient(104deg, rgba(23, 16, 15, 0.96) 0%, rgba(59, 31, 29, 0.95) 52%, rgba(134, 22, 37, 0.92) 100%)",
+      border: "rgba(247, 201, 40, 0.45)",
+      borderHover: "rgba(247, 201, 40, 0.95)",
+      glow: "rgba(217, 16, 47, 0.55)",
+      ink: "#f8efe6",
+      inkSoft: "rgba(238, 214, 206, 0.86)",
+      // The award pill in Pokéball yellow, with the shell colour as its ink.
+      badgeBg: "#f7c928",
+      badgeInk: "#211514",
+      trim: "rgba(247, 201, 40, 0.42)",
+      brandTitle: true,
+      /**
+       * Spheres inside the row too, brighter than the page field: the row is a
+       * small dark panel, and the page's 0.08 floor is invisible at this size.
+       */
+      drift: {
+        count: 13,
+        mobileCount: 6,
+        mix: [
+          {
+            kind: "pokeball",
+            weight: 3,
+            colors: ["#e42747", "#f4e8e8", "#1c1211"],
+          },
+          { kind: "spark", weight: 1, colors: ["#ffe98a"] },
+        ],
+        // Same floor problem as the page field, tighter ceiling: the row is
+        // only so tall.
+        size: [12, 24],
+        speed: [-13, 14],
+        bob: [3, 9],
+        bobSpeed: [0.07, 0.2],
+        spin: [-0.09, 0.09],
+        opacity: [0.24, 0.5],
+      },
+    },
+  },
+
   /**
    * FUTURX — dark navy, with graduation caps drifting up through it.
    *

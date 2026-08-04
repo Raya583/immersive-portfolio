@@ -47,6 +47,16 @@ export interface ExperienceItem {
 }
 
 export interface ProjectLinks {
+  /**
+   * A REAL, DEPLOYED, WORKING app. Not a prototype, not a marketing site.
+   *
+   * Kept separate from `website` and `prototype` on purpose: those three are
+   * genuinely different claims, and collapsing them loses the one that is
+   * hardest to earn. A Figma prototype is a picture that responds to clicks; a
+   * live app is a thing that runs. The case study labels them differently and
+   * only this one gets the LIVE badge.
+   */
+  liveApp?: string;
   website?: string;
   prototype?: string;
   repo?: string;
@@ -148,6 +158,110 @@ export interface Project {
     note: string;
     sample: string;
   };
+  /**
+   * ── A PRODUCT MADE OF SECTIONS ───────────────────────────────────────────
+   * For work that is not one screen but several connected tools, each worth
+   * showing on its own.
+   *
+   * `process` cannot carry this: it is a narrative of what happened, in order,
+   * and it has nowhere to put artwork. This is the opposite shape — a set of
+   * peers, each with its own shots, in no particular sequence.
+   *
+   * `shots` are that tool's own screens. Two reads best: one wide establishing
+   * shot and one detail. More than that and the section stops being scannable
+   * and becomes the gallery it was meant to replace.
+   */
+  tools?: {
+    /** The tool's number in the product, e.g. "01". Shown as a label. */
+    n: string;
+    name: string;
+    body: string;
+    shots?: { src: string; alt: string }[];
+  }[];
+
+  /**
+   * ── THE DESIGN SYSTEM ────────────────────────────────────────────────────
+   * The rules the work runs on, as rules — distinct from `foundations`, which
+   * is the palette and the type.
+   *
+   * `swatches` are rendered as real elements rather than as a picture of
+   * swatches, so the colours are inspectable and the labels are selectable
+   * text. A screenshot of a palette is the one place a case study can get away
+   * with an image and shouldn't.
+   */
+  designSystem?: {
+    intro: string;
+    rules: { label: string; body: string }[];
+    /**
+     * ── A THREE-ROLE COLOUR SYSTEM ─────────────────────────────────────────
+     * One entry per type, carrying all three colours that type owns, because
+     * the point being made is the RELATIONSHIP between them:
+     *
+     *   badge     the vivid pill. Canonical, and what identifies the type.
+     *   card      a pale tint at near-uniform lightness, for light surfaces.
+     *   gradient  [light, dark], deliberately desaturated. The backdrop that
+     *             artwork sits on, and what the badge has to survive against.
+     *
+     * The specimen renders the badge ON the gradient for exactly that reason:
+     * three colours listed side by side prove nothing, and the whole system
+     * rests on the vivid one still reading against the muted one.
+     */
+    swatches?: {
+      name: string;
+      badge: string;
+      card: string;
+      gradient: [string, string];
+    }[];
+    note?: string;
+  };
+
+  /**
+   * ── AN AUDIT ─────────────────────────────────────────────────────────────
+   * A measured before-and-after. Numbers, not adjectives.
+   *
+   * This exists because "I refactored my design system" is a claim and
+   * "1,481 copies of one badge became 1 component with 18 variants" is
+   * evidence. Only fill it in where the counts were actually taken.
+   */
+  audit?: {
+    intro: string;
+    /** Column headings, so a table that is not before/after can say so. */
+    columns?: { before: string; after: string };
+    rows: { label: string; before: string; after: string }[];
+    /** What the numbers meant, under the table. */
+    note?: string;
+    /** Where it went next. Paragraphs. */
+    after?: string[];
+  };
+
+  /** What the work taught, in hindsight. Honest ones only. */
+  reflections?: { title: string; body: string }[];
+
+  /**
+   * ── HOW IT WAS BUILT ─────────────────────────────────────────────────────
+   * The technical decisions worth telling a NON-ENGINEER about.
+   *
+   * `title` is the claim in plain language and should read on its own: a
+   * recruiter skimming headings should still come away with the point. `body`
+   * is the explanation, and it is the one place on a case-study page where
+   * naming a mechanism is the whole value, so it does not get dumbed down
+   * either. The pair is what makes this legible to both readers.
+   */
+  engineering?: { title: string; body: string }[];
+
+  /**
+   * The last word. One or two short paragraphs of position rather than
+   * evidence, after the argument has been made.
+   */
+  closing?: { title: string; body: string };
+
+  /**
+   * A legal or attribution note for the foot of the page. Fan work, licensed
+   * data and borrowed assets all belong here, and it renders LAST so it reads
+   * as a footnote rather than as part of the argument.
+   */
+  disclaimer?: string;
+
   /** The single idea the work turns on. Paired with the artwork. */
   keyFeature?: { title: string; body: string };
   /**
@@ -743,18 +857,505 @@ export const projects: Project[] = [
   },
   {
     title: "DEXOVO",
-    hook: "A companion for every game in the franchise.",
-    // TODO: no artwork yet — add e.g.
-    //   thumbnail: "/images/projects/x/cover.png"
-    description:
-      "A Pokémon companion app, currently in development, aimed at providing crystal-clear information for players across every game in the franchise. It focuses on simplifying gameplay with accurate data, guides and insights to support trainers throughout their journey.",
-    role: "", // TODO: not stated on the résumé
-    tech: [], // TODO: not stated on the résumé
-    impact: "", // TODO: still in development — no outcome stated
-    links: {
-      prototype:
-        "https://www.figma.com/proto/ibnduIw9wewPz169Dk24Xz/pokemon?node-id=245-6979&p=f&t=MmvqAxbxlO6lMMMc-1&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=6%3A3",
+    hook: "The Pokédex that answers the next question.",
+    /*
+     * One image doing both jobs: the case study's hero and the quest-log row.
+     *
+     * The tablet is the only mockup that survives BOTH sizes. The laptop shots
+     * are wide enough that at a 260px row the screen collapses to a smudge,
+     * and the phone shots read fine small but waste most of a hero on
+     * background. The iPad sits large in its own frame, so the grid is legible
+     * at both, and its wood and fabric are warm enough to belong to a maroon
+     * page rather than fighting it.
+     */
+    thumbnail: "/images/projects/dexovo/mock-tablet-wood.webp",
+    rowThumbnail: "/images/projects/dexovo/mock-tablet-wood.webp",
+    overview:
+      "A traditional Pokédex answers one question: what is this Pokémon? " +
+      "Dexovo answers that, and then keeps going. What will Brock actually " +
+      "send out, at what level, knowing what moves? What team should I build " +
+      "in Emerald if I picked Treecko? Will my six beat Sabrina? A shipped " +
+      "React and Vite app on live PokeAPI data, not a design file: five " +
+      "connected tools over 1,025 Pokémon, 140 Gym Leaders, 2,223 items and " +
+      "10 regions.",
+    brief:
+      "A dex is a database problem wearing a UI, and every one of them faces " +
+      "the same three constraints. Every design decision here traces back to " +
+      "them.",
+    challenge: [
+      {
+        label: "Identity at thumbnail size",
+        body:
+          "A user scrolling a grid of 1,025 entries needs to know what " +
+          "something is before they read its name. Type has to be legible at " +
+          "145px.",
+      },
+      {
+        label: "Two types, one card",
+        body:
+          "Most creatures have two types. A single card has to encode a pair " +
+          "without becoming ambiguous or ugly.",
+      },
+      {
+        label: "Data nobody asked to read",
+        body:
+          "Stats, moves by game version, evolution conditions, encounter " +
+          "rates. All of it matters to someone, none of it should be the " +
+          "first thing you see.",
+      },
+    ],
+
+    /*
+     * ── THE FIVE TOOLS ───────────────────────────────────────────────────
+     * Peers, not a sequence: the numbering is the product's own and a reader
+     * can start anywhere. One shot each, except Builder, which gets two
+     * because it is the only section making an argument rather than listing.
+     */
+    tools: [
+      {
+        n: "01",
+        name: "Pokédex",
+        body:
+          "Search and filter all 1,025 Pokémon. The filters compose rather " +
+          "than replace each other, so region, type, form and rarity stack " +
+          "into one query, and the live count tells you what you are about to " +
+          "get before you commit to it.",
+        shots: [
+          {
+            src: "/images/projects/dexovo/web-pokedex-grid.webp",
+            alt: "The Pokédex grid showing the national dex, each card tinted by its primary type",
+          },
+        ],
+      },
+      {
+        n: "02",
+        name: "Builder Dex",
+        body:
+          "The standout. Give it a game and a starter and it recommends a " +
+          "six-Pokémon team scored against that game's actual Gym Leaders, " +
+          "with every pick justified by name: answers Brock, Giovanni, " +
+          "Lt. Surge. Or build your own and it analyses the party you have, " +
+          "reporting a matchup percentage per gym, your type coverage, and " +
+          "the weaknesses your six happen to share. It gives advice and shows " +
+          "its working.",
+        shots: [
+          {
+            src: "/images/projects/dexovo/web-builder-suggested-team.webp",
+            alt: "A recommended six-Pokémon team, each pick justified against named Gym Leaders",
+          },
+          {
+            src: "/images/projects/dexovo/web-builder-own-analysis.webp",
+            alt: "Live analysis of a self-built team: type coverage, shared weaknesses, and a matchup percentage for each gym",
+          },
+        ],
+      },
+      {
+        n: "03",
+        name: "Gymdex",
+        body:
+          "All 140 Gym Leaders, with parties that are specific to the version " +
+          "you are playing. Red and Blue Brock is not Yellow Brock, and the " +
+          "sheet tells you which one you are looking at rather than averaging " +
+          "the two into something that exists in no game.",
+        shots: [
+          {
+            src: "/images/projects/dexovo/web-gymdex-leaders.webp",
+            alt: "The Gym Leaders index, each card coloured by that leader's type specialism",
+          },
+        ],
+      },
+      {
+        n: "04",
+        name: "Mapdex",
+        body:
+          "Ten regions, browsable by place: cities, routes, caves, water, " +
+          "forests and landmarks. Every location carries its own encounter " +
+          "table, listing what you can catch there, in which game, by which " +
+          "method and at what rate.",
+        shots: [
+          {
+            src: "/images/projects/dexovo/web-mapdex-region.webp",
+            alt: "A region map with places marked and browsable by type",
+          },
+        ],
+      },
+      {
+        n: "05",
+        name: "Itemdex",
+        body:
+          "All 2,223 items, grouped the way the games group them, and reusing " +
+          "the same card, badge and sheet primitives as everything else in " +
+          "the product.",
+        shots: [
+          {
+            src: "/images/projects/dexovo/web-itemdex-grid.webp",
+            alt: "The Itemdex grid, showing items grouped across their pockets",
+          },
+        ],
+      },
+    ],
+
+    /*
+     * ── THE HEART OF THE STORY ───────────────────────────────────────────
+     * The audit is the strongest thing here because it is the only part that
+     * is measured rather than argued. Every number was counted in the real
+     * Figma file.
+     */
+    audit: {
+      intro:
+        "I built it wrong first. I designed it screen by screen in Figma, " +
+        "which worked until it did not. At 86 screens I audited my own file " +
+        "and found that the design system I thought I had been maintaining " +
+        "had quietly drifted.",
+      rows: [
+        { label: "Design tokens", before: "0", after: "50" },
+        {
+          label: "Type badges, none of them components",
+          before: "1,481 copies",
+          after: "1 component, 18 variants",
+        },
+        { label: "Copy-pasted app headers", before: "42", after: "1 component" },
+        {
+          label: "Distinct geometries for one sprite slot",
+          before: "33",
+          after: "1",
+        },
+        { label: "Duplicate search icons", before: "29", after: "0" },
+        {
+          label: "Card colour rule",
+          before: "none",
+          after: "primary type wins",
+        },
+        { label: "Total nodes", before: "23,834", after: "19,200" },
+      ],
+      note:
+        "The symptom was card colour. Sampling every card showed Dark-types " +
+        "rendering on cyan and Steel on pink, while the badges were 98% " +
+        "consistent. The system existed. It had just never been written down, " +
+        "so it only held where I happened to remember it.",
+      after: [
+        "Rebuilding it as tokens and components fixed the drift, and then " +
+          "exposed the real ceiling: every card needed its sprite placed by " +
+          "hand, which capped the design at 104 Pokémon out of 1,025. No " +
+          "amount of Figma discipline solves that one.",
+        "So the design system stopped being the artefact and became the " +
+          "specification, and I implemented it in React against PokeAPI. All " +
+          "1,025 appear at runtime with their artwork. The ceiling was gone.",
+      ],
     },
+
+    reflections: [
+      {
+        title: "Tokens first, not last",
+        body:
+          "The type colour system was the thing every other decision depended " +
+          "on, and I built it after 86 screens instead of before one.",
+      },
+      {
+        title: "Depth beats breadth",
+        body:
+          "86 screens at 80% is worth less than eight at 100%. Nobody counts " +
+          "screens; everyone notices unfinished ones.",
+      },
+      {
+        title: "Consistent is not designed",
+        body:
+          "Fixing the drift made everything uniform. It did not make any " +
+          "individual choice better. Those are separate jobs and I conflated " +
+          "them.",
+      },
+    ],
+
+    engineering: [
+      {
+        title: "1,025 Pokémon in 18 requests",
+        body:
+          "The obvious way to build a dex is to ask the API about each " +
+          "Pokémon in turn, which is 1,025 requests before anything appears " +
+          "on screen. Asking about each TYPE instead is 18, and each answer " +
+          "carries three things at once: every Pokémon of that type, the " +
+          "slot ordering that the card colour rule depends on, and the full " +
+          "type-effectiveness chart. The thing that makes the grid fast is " +
+          "the same thing that makes Builder's scoring possible, and both " +
+          "came out of one decision about which question to ask.",
+      },
+      {
+        title: "Data the API does not have",
+        body:
+          "PokeAPI has no trainer or gym data in it at all, so Gymdex could " +
+          "not be built from it. I extracted all 140 Gym Leaders, with their " +
+          "levels, species and movesets, from the games' own source by way of " +
+          "the pret disassemblies. Generation 1 does not store movesets at " +
+          "all: it derives them from a Pokémon's level at runtime, so I " +
+          "reproduced that algorithm rather than guessing. Brock's Onix shows " +
+          "the moves you will actually face.",
+      },
+      {
+        title: "It says so instead of guessing",
+        body:
+          "Some of this data genuinely does not exist: item locations, and " +
+          "encounters for Paldea and Hisui. The app names the gap and moves " +
+          "on. An empty panel reads as a bug and an invented number reads as " +
+          "a fact, and the third option costs one line of copy.",
+      },
+    ],
+
+    designSystem: {
+      intro:
+        "Eighteen type colours cannot all be distinct at readable contrast, " +
+        "so I stopped trying and split the jobs instead. The badge " +
+        "identifies; the card sets mood; the gradient stays behind the art.",
+      rules: [
+        {
+          label: "The badge identifies, the card sets mood",
+          body:
+            "Pastel tints for Ice and Dragon land close enough to be " +
+            "indistinguishable, and no amount of tuning separates eighteen of " +
+            "them. Near-identical tints stop mattering the moment something " +
+            "else is authoritative, so the badge carries the exact type and " +
+            "the card is free to be atmosphere.",
+        },
+        {
+          label: "The primary type wins",
+          body:
+            "For dual types, the first slot decides the card. A Water and " +
+            "Steel Empoleon gets a water card. One rule, no ambiguity, and it " +
+            "matches the order PokeAPI already returns type slots in, so it " +
+            "is enforced by the data rather than by hand.",
+        },
+        {
+          label: "Three greys, three hues",
+          body:
+            "Normal, Steel and Dark are all grey at badge level, and derived " +
+            "mechanically their card tints collapse into one colour. Each was " +
+            "given a hue instead: Normal warm, Steel cool, Dark warm-brown, " +
+            "with Dark set deliberately darker than the other seventeen " +
+            "because at uniform lightness it reads as beige.",
+        },
+        {
+          label: "One type, three jobs",
+          body:
+            "Each type ends up owning three colours, because it has three " +
+            "jobs to do. The badge is the vivid one and the canonical one. " +
+            "The card tint is pale and holds a near-uniform lightness, so a " +
+            "grid of them reads as one surface. The gradient is deliberately " +
+            "desaturated, because it is the backdrop artwork sits on and its " +
+            "job is to stay behind the sprite and behind the badge.",
+        },
+      ],
+      /*
+       * All eighteen, straight from the app's own src/tokens.css. The badge
+       * values mirror the Figma "Dexovo Tokens" collection, so they are the
+       * canonical brand colours; the other two are derived roles.
+       */
+      swatches: [
+        {
+          name: "Normal",
+          badge: "#AFAFAF",
+          card: "#CECCC5",
+          gradient: ["#8A8477", "#625D53"],
+        },
+        {
+          name: "Fire",
+          badge: "#F81B1B",
+          card: "#E29C9C",
+          gradient: ["#C4603A", "#8E3A22"],
+        },
+        {
+          name: "Water",
+          badge: "#1B5DF8",
+          card: "#9CB1E2",
+          gradient: ["#4F7FB5", "#345D8C"],
+        },
+        {
+          name: "Grass",
+          badge: "#4A7E66",
+          card: "#AFD0C1",
+          gradient: ["#557D45", "#365D37"],
+        },
+        {
+          name: "Electric",
+          badge: "#F7DA3B",
+          card: "#E2D79C",
+          gradient: ["#D2A72F", "#96721E"],
+        },
+        {
+          name: "Ice",
+          badge: "#56F0FE",
+          card: "#9CDCE2",
+          gradient: ["#5E9BA8", "#3E717C"],
+        },
+        {
+          name: "Fighting",
+          badge: "#E66B00",
+          card: "#DFB79F",
+          gradient: ["#A85A45", "#7A3A2B"],
+        },
+        {
+          name: "Poison",
+          badge: "#944EAB",
+          card: "#CBA7D7",
+          gradient: ["#76517D", "#51365C"],
+        },
+        {
+          name: "Ground",
+          badge: "#BE5C07",
+          card: "#D6C094",
+          gradient: ["#A07C4C", "#6F5433"],
+        },
+        {
+          name: "Flying",
+          badge: "#BDE3FF",
+          card: "#9CC5E2",
+          gradient: ["#6E86B5", "#4A5F8A"],
+        },
+        {
+          name: "Psychic",
+          badge: "#F2437D",
+          card: "#E29CB3",
+          gradient: ["#A45479", "#71374F"],
+        },
+        {
+          name: "Bug",
+          badge: "#75AC11",
+          card: "#C9E29C",
+          gradient: ["#6E8A3C", "#4C6428"],
+        },
+        {
+          name: "Rock",
+          badge: "#907D5B",
+          card: "#C3B098",
+          gradient: ["#8A704E", "#665038"],
+        },
+        {
+          name: "Ghost",
+          badge: "#7F1AA8",
+          card: "#CE9CE2",
+          gradient: ["#6B5A8E", "#453860"],
+        },
+        {
+          name: "Dragon",
+          badge: "#0793BE",
+          card: "#9CD2E2",
+          gradient: ["#5A5FA8", "#3A3E7A"],
+        },
+        {
+          name: "Dark",
+          badge: "#392C2C",
+          card: "#A38C85",
+          gradient: ["#5A4A45", "#3A2F2C"],
+        },
+        {
+          name: "Steel",
+          badge: "#757575",
+          card: "#B9C4D0",
+          gradient: ["#7A8894", "#566169"],
+        },
+        {
+          name: "Fairy",
+          badge: "#FF68E1",
+          card: "#E29CD4",
+          gradient: ["#B06A96", "#7E4569"],
+        },
+      ],
+      note:
+        "Fifty-four colours, and the whole system had to survive being read " +
+        "at 145px in a grid of 1,025 cards, which is the size that decides " +
+        "whether any of it works. It is not perfectly tidy: Dragon's badge is " +
+        "a cyan that came from Figma while its gradient is the indigo the " +
+        "series has always used, and the two diverge more than any other " +
+        "pair. Flying's badge is pale enough that the app's own white label " +
+        "sits on it at low contrast, which is a real defect rather than a " +
+        "stylistic choice.",
+    },
+
+    foundations:
+      "An oxblood shell, so the eighteen type colours have somewhere dark to " +
+      "sit, with the two Poké Ball colours doing the accent work. The " +
+      "fifty-four badges, tints and gradients above are the real system; " +
+      "these four are the shell they all live in.",
+    palette: [
+      { name: "Shell", hex: "#211514" },
+      { name: "Ink", hex: "#17100F" },
+      { name: "Poké Ball Yellow", hex: "#F7C928" },
+      { name: "Poké Ball Red", hex: "#D9102F" },
+    ],
+    typography: {
+      headingName: "Port Lligat Sans",
+      bodyName: "Inter",
+      note:
+        "A rounded, even-stroked display face for headings and every number, " +
+        "with Inter underneath for anything read in quantity. The display " +
+        "face has warmth without being a cartoon, which is the line this " +
+        "subject has to walk.",
+      sample: "One rule, eighteen types.",
+    },
+
+    /*
+     * What the sections above did not place: the two remaining mockups feed
+     * the wide slots, and the two phone shots pair off below them so the
+     * responsive work is shown rather than claimed.
+     */
+    gallery: [
+      {
+        src: "/images/projects/dexovo/mock-laptop-desk.webp",
+        alt: "Dexovo's Pokédex open on a laptop, in use at a desk by a window",
+      },
+      {
+        src: "/images/projects/dexovo/mock-phone-hand.webp",
+        alt: "A Pokémon entry held in one hand, the page taking its whole background from the primary type",
+      },
+      {
+        src: "/images/projects/dexovo/mob-pokedex-grid.webp",
+        alt: "The Pokédex grid on a phone, reflowed to two cards across",
+        tall: true,
+      },
+      {
+        src: "/images/projects/dexovo/mob-builder-own-analysis.webp",
+        alt: "Builder Dex's team analysis on a phone, with the gym matchup list stacked",
+        tall: true,
+      },
+    ],
+
+    outcome:
+      "A shipped React and Vite app running on live PokeAPI data: 1,025 " +
+      "Pokémon, 140 Gym Leaders, 2,223 items and 10 regions, all present at " +
+      "runtime. The design system that started as 86 drifting Figma screens " +
+      "is now 50 tokens and a component set that the data enforces rather " +
+      "than my memory.",
+    closing: {
+      title: "The idea behind it",
+      body:
+        "It treats the games as the subject, not just the species list. And " +
+        "where the data to answer a question does not exist, it says so " +
+        "instead of guessing.",
+    },
+    description:
+      "A Pokémon companion app built as five connected tools over live PokeAPI data: a Pokédex for all 1,025 species, a Builder Dex that scores a team against a game's actual Gym Leaders, plus Gymdex, Mapdex and Itemdex. Designed as a system in Figma, audited when that system drifted, then rebuilt in React so the rules are enforced by the data.",
+    role:
+      "Everything: product thinking, information architecture, the design " +
+      "system, the interface, the data extraction, and the React " +
+      "implementation.",
+    tech: ["React", "Vite", "PokeAPI", "Figma", "Design tokens"],
+    impact:
+      "1,025 Pokémon at runtime, up from the 104 the hand-placed Figma design " +
+      "could reach.",
+    /*
+     * The live build, NOT the Figma prototype it replaced. Linking the
+     * prototype here would undercut the whole page: the audit's punchline is
+     * that the Figma file topped out at 104 of 1,025 Pokemon and the React
+     * implementation did not. The prototype URL is preserved in the comment
+     * below if it is ever wanted as a historical artefact.
+     *
+     * prototype: "https://www.figma.com/proto/ibnduIw9wewPz169Dk24Xz/pokemon?node-id=245-6979"
+     */
+    links: {
+      liveApp: "https://dexovo.vercel.app/",
+    },
+    disclaimer:
+      "Unofficial fan concept, built as a design exercise. Data and sprites " +
+      "from PokeAPI. Pokémon © Nintendo / Game Freak / The Pokémon Company. " +
+      "Not affiliated with or endorsed by Nintendo, and not for commercial use.",
   },
   {
     title: "FUTURX",
