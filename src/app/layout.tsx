@@ -10,6 +10,7 @@ import {
   Inter,
   Port_Lligat_Sans,
 } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 /*
@@ -131,7 +132,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${fraunces.variable} ${dmSans.variable} ${playfair.variable} ${karla.variable} ${spaceGrotesk.variable} ${outfit.variable} ${crimson.variable} ${inter.variable} ${portLligat.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
